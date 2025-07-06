@@ -1,4 +1,104 @@
-// ====== IndexedDB Setup =======
+// ====== Lista física de países y prefijos =======
+const countriesData = [
+  {name: "Afganistán", code: "AF", dial: "+93"}, {name: "Albania", code: "AL", dial: "+355"},
+  {name: "Alemania", code: "DE", dial: "+49"}, {name: "Andorra", code: "AD", dial: "+376"},
+  {name: "Angola", code: "AO", dial: "+244"}, {name: "Arabia Saudita", code: "SA", dial: "+966"},
+  {name: "Argelia", code: "DZ", dial: "+213"}, {name: "Argentina", code: "AR", dial: "+54"},
+  {name: "Armenia", code: "AM", dial: "+374"}, {name: "Australia", code: "AU", dial: "+61"},
+  {name: "Austria", code: "AT", dial: "+43"}, {name: "Azerbaiyán", code: "AZ", dial: "+994"},
+  {name: "Bahamas", code: "BS", dial: "+1"}, {name: "Bangladés", code: "BD", dial: "+880"},
+  {name: "Baréin", code: "BH", dial: "+973"}, {name: "Bélgica", code: "BE", dial: "+32"},
+  {name: "Belice", code: "BZ", dial: "+501"}, {name: "Benín", code: "BJ", dial: "+229"},
+  {name: "Bielorrusia", code: "BY", dial: "+375"}, {name: "Birmania", code: "MM", dial: "+95"},
+  {name: "Bolivia", code: "BO", dial: "+591"}, {name: "Bosnia y Herzegovina", code: "BA", dial: "+387"},
+  {name: "Botsuana", code: "BW", dial: "+267"}, {name: "Brasil", code: "BR", dial: "+55"},
+  {name: "Brunéi", code: "BN", dial: "+673"}, {name: "Bulgaria", code: "BG", dial: "+359"},
+  {name: "Burkina Faso", code: "BF", dial: "+226"}, {name: "Burundi", code: "BI", dial: "+257"},
+  {name: "Cabo Verde", code: "CV", dial: "+238"}, {name: "Camboya", code: "KH", dial: "+855"},
+  {name: "Camerún", code: "CM", dial: "+237"}, {name: "Canadá", code: "CA", dial: "+1"},
+  {name: "Catar", code: "QA", dial: "+974"}, {name: "Chad", code: "TD", dial: "+235"},
+  {name: "Chile", code: "CL", dial: "+56"}, {name: "China", code: "CN", dial: "+86"},
+  {name: "Chipre", code: "CY", dial: "+357"}, {name: "Colombia", code: "CO", dial: "+57"},
+  {name: "Comoras", code: "KM", dial: "+269"}, {name: "Congo", code: "CG", dial: "+242"},
+  {name: "Corea del Norte", code: "KP", dial: "+850"}, {name: "Corea del Sur", code: "KR", dial: "+82"},
+  {name: "Costa de Marfil", code: "CI", dial: "+225"}, {name: "Costa Rica", code: "CR", dial: "+506"},
+  {name: "Croacia", code: "HR", dial: "+385"}, {name: "Cuba", code: "CU", dial: "+53"},
+  {name: "Dinamarca", code: "DK", dial: "+45"}, {name: "Dominica", code: "DM", dial: "+1"},
+  {name: "Ecuador", code: "EC", dial: "+593"}, {name: "Egipto", code: "EG", dial: "+20"},
+  {name: "El Salvador", code: "SV", dial: "+503"}, {name: "Emiratos Árabes Unidos", code: "AE", dial: "+971"},
+  {name: "Eritrea", code: "ER", dial: "+291"}, {name: "Eslovaquia", code: "SK", dial: "+421"},
+  {name: "Eslovenia", code: "SI", dial: "+386"}, {name: "España", code: "ES", dial: "+34"},
+  {name: "Estados Unidos", code: "US", dial: "+1"}, {name: "Estonia", code: "EE", dial: "+372"},
+  {name: "Etiopía", code: "ET", dial: "+251"}, {name: "Filipinas", code: "PH", dial: "+63"},
+  {name: "Finlandia", code: "FI", dial: "+358"}, {name: "Fiyi", code: "FJ", dial: "+679"},
+  {name: "Francia", code: "FR", dial: "+33"}, {name: "Gabón", code: "GA", dial: "+241"},
+  {name: "Gambia", code: "GM", dial: "+220"}, {name: "Georgia", code: "GE", dial: "+995"},
+  {name: "Ghana", code: "GH", dial: "+233"}, {name: "Granada", code: "GD", dial: "+1"},
+  {name: "Grecia", code: "GR", dial: "+30"}, {name: "Guatemala", code: "GT", dial: "+502"},
+  {name: "Guinea", code: "GN", dial: "+224"}, {name: "Guinea-Bisáu", code: "GW", dial: "+245"},
+  {name: "Guinea Ecuatorial", code: "GQ", dial: "+240"},
+  {name: "Guyana", code: "GY", dial: "+592"}, {name: "Haití", code: "HT", dial: "+509"},
+  {name: "Honduras", code: "HN", dial: "+504"}, {name: "Hungría", code: "HU", dial: "+36"},
+  {name: "India", code: "IN", dial: "+91"}, {name: "Indonesia", code: "ID", dial: "+62"},
+  {name: "Irak", code: "IQ", dial: "+964"}, {name: "Irán", code: "IR", dial: "+98"},
+  {name: "Irlanda", code: "IE", dial: "+353"}, {name: "Islandia", code: "IS", dial: "+354"},
+  {name: "Islas Marshall", code: "MH", dial: "+692"}, {name: "Islas Salomón", code: "SB", dial: "+677"},
+  {name: "Israel", code: "IL", dial: "+972"}, {name: "Italia", code: "IT", dial: "+39"},
+  {name: "Jamaica", code: "JM", dial: "+1"}, {name: "Japón", code: "JP", dial: "+81"},
+  {name: "Jordania", code: "JO", dial: "+962"}, {name: "Kazajistán", code: "KZ", dial: "+7"},
+  {name: "Kenia", code: "KE", dial: "+254"}, {name: "Kirguistán", code: "KG", dial: "+996"},
+  {name: "Kiribati", code: "KI", dial: "+686"}, {name: "Kuwait", code: "KW", dial: "+965"},
+  {name: "Laos", code: "LA", dial: "+856"}, {name: "Lesoto", code: "LS", dial: "+266"},
+  {name: "Letonia", code: "LV", dial: "+371"}, {name: "Líbano", code: "LB", dial: "+961"},
+  {name: "Liberia", code: "LR", dial: "+231"}, {name: "Libia", code: "LY", dial: "+218"},
+  {name: "Liechtenstein", code: "LI", dial: "+423"}, {name: "Lituania", code: "LT", dial: "+370"},
+  {name: "Luxemburgo", code: "LU", dial: "+352"}, {name: "Macedonia", code: "MK", dial: "+389"},
+  {name: "Madagascar", code: "MG", dial: "+261"}, {name: "Malasia", code: "MY", dial: "+60"},
+  {name: "Malaui", code: "MW", dial: "+265"}, {name: "Maldivas", code: "MV", dial: "+960"},
+  {name: "Malí", code: "ML", dial: "+223"}, {name: "Malta", code: "MT", dial: "+356"},
+  {name: "Marruecos", code: "MA", dial: "+212"}, {name: "Mauricio", code: "MU", dial: "+230"},
+  {name: "Mauritania", code: "MR", dial: "+222"}, {name: "México", code: "MX", dial: "+52"},
+  {name: "Micronesia", code: "FM", dial: "+691"}, {name: "Moldavia", code: "MD", dial: "+373"},
+  {name: "Mónaco", code: "MC", dial: "+377"}, {name: "Mongolia", code: "MN", dial: "+976"},
+  {name: "Montenegro", code: "ME", dial: "+382"}, {name: "Mozambique", code: "MZ", dial: "+258"},
+  {name: "Namibia", code: "NA", dial: "+264"}, {name: "Nauru", code: "NR", dial: "+674"},
+  {name: "Nepal", code: "NP", dial: "+977"}, {name: "Nicaragua", code: "NI", dial: "+505"},
+  {name: "Níger", code: "NE", dial: "+227"}, {name: "Nigeria", code: "NG", dial: "+234"},
+  {name: "Noruega", code: "NO", dial: "+47"}, {name: "Nueva Zelanda", code: "NZ", dial: "+64"},
+  {name: "Omán", code: "OM", dial: "+968"}, {name: "Países Bajos", code: "NL", dial: "+31"},
+  {name: "Pakistán", code: "PK", dial: "+92"}, {name: "Palaos", code: "PW", dial: "+680"},
+  {name: "Palestina", code: "PS", dial: "+970"}, {name: "Panamá", code: "PA", dial: "+507"},
+  {name: "Papúa Nueva Guinea", code: "PG", dial: "+675"}, {name: "Paraguay", code: "PY", dial: "+595"},
+  {name: "Perú", code: "PE", dial: "+51"}, {name: "Polonia", code: "PL", dial: "+48"},
+  {name: "Portugal", code: "PT", dial: "+351"}, {name: "Reino Unido", code: "GB", dial: "+44"},
+  {name: "República Centroafricana", code: "CF", dial: "+236"}, {name: "República Checa", code: "CZ", dial: "+420"},
+  {name: "República Dominicana", code: "DO", dial: "+1"}, {name: "República del Congo", code: "CD", dial: "+243"},
+  {name: "Ruanda", code: "RW", dial: "+250"}, {name: "Rumanía", code: "RO", dial: "+40"},
+  {name: "Rusia", code: "RU", dial: "+7"}, {name: "Samoa", code: "WS", dial: "+685"},
+  {name: "San Cristóbal y Nieves", code: "KN", dial: "+1"}, {name: "San Marino", code: "SM", dial: "+378"},
+  {name: "San Vicente y las Granadinas", code: "VC", dial: "+1"}, {name: "Santa Lucía", code: "LC", dial: "+1"},
+  {name: "Santo Tomé y Príncipe", code: "ST", dial: "+239"}, {name: "Senegal", code: "SN", dial: "+221"},
+  {name: "Serbia", code: "RS", dial: "+381"}, {name: "Seychelles", code: "SC", dial: "+248"},
+  {name: "Sierra Leona", code: "SL", dial: "+232"}, {name: "Singapur", code: "SG", dial: "+65"},
+  {name: "Siria", code: "SY", dial: "+963"}, {name: "Somalia", code: "SO", dial: "+252"},
+  {name: "Sri Lanka", code: "LK", dial: "+94"}, {name: "Suazilandia", code: "SZ", dial: "+268"},
+  {name: "Sudáfrica", code: "ZA", dial: "+27"}, {name: "Sudán", code: "SD", dial: "+249"},
+  {name: "Sudán del Sur", code: "SS", dial: "+211"}, {name: "Suecia", code: "SE", dial: "+46"},
+  {name: "Suiza", code: "CH", dial: "+41"}, {name: "Surinam", code: "SR", dial: "+597"},
+  {name: "Tailandia", code: "TH", dial: "+66"}, {name: "Tanzania", code: "TZ", dial: "+255"},
+  {name: "Tayikistán", code: "TJ", dial: "+992"}, {name: "Timor Oriental", code: "TL", dial: "+670"},
+  {name: "Togo", code: "TG", dial: "+228"}, {name: "Tonga", code: "TO", dial: "+676"},
+  {name: "Trinidad y Tobago", code: "TT", dial: "+1"}, {name: "Túnez", code: "TN", dial: "+216"},
+  {name: "Turkmenistán", code: "TM", dial: "+993"}, {name: "Turquía", code: "TR", dial: "+90"},
+  {name: "Tuvalu", code: "TV", dial: "+688"}, {name: "Ucrania", code: "UA", dial: "+380"},
+  {name: "Uganda", code: "UG", dial: "+256"}, {name: "Uruguay", code: "UY", dial: "+598"},
+  {name: "Uzbekistán", code: "UZ", dial: "+998"}, {name: "Vanuatu", code: "VU", dial: "+678"},
+  {name: "Venezuela", code: "VE", dial: "+58"}, {name: "Vietnam", code: "VN", dial: "+84"},
+  {name: "Yemen", code: "YE", dial: "+967"}, {name: "Yibuti", code: "DJ", dial: "+253"},
+  {name: "Zambia", code: "ZM", dial: "+260"}, {name: "Zimbabue", code: "ZW", dial: "+263"}
+];
+
+// ========== IndexedDB Setup ===========
 const DB_NAME = "mypubDB";
 const DB_VERSION = 1;
 let db;
@@ -6,8 +106,8 @@ let currentUser = null;
 const DEVELOPER_EMAIL = "enzemajr@gmail.com";
 const DEVELOPER_PHONE = "+240222084663";
 
-// ========== Inicializa EmailJS ==========
-emailjs.init("YOUR_PUBLIC_KEY"); // <-- ¡Pon tu public key de emailjs aquí!
+// ========== EmailJS (reemplaza por tus propias credenciales) ==========
+emailjs.init("YOUR_PUBLIC_KEY");
 
 // ========== IndexedDB Open ==========
 function openDB() {
@@ -21,10 +121,10 @@ function openDB() {
     request.onupgradeneeded = (e) => {
       db = e.target.result;
       if (!db.objectStoreNames.contains("users")) {
-        const users = db.createObjectStore("users", { keyPath: "email" });
+        db.createObjectStore("users", { keyPath: "email" });
       }
       if (!db.objectStoreNames.contains("files")) {
-        const files = db.createObjectStore("files", { keyPath: "id", autoIncrement: true });
+        db.createObjectStore("files", { keyPath: "id", autoIncrement: true });
       }
       if (!db.objectStoreNames.contains("shares")) {
         db.createObjectStore("shares", { keyPath: "id", autoIncrement: true });
@@ -34,7 +134,6 @@ function openDB() {
   });
 }
 
-// ========== Utilidades ==========
 function getStore(storeName, mode = "readonly") {
   return db.transaction(storeName, mode).objectStore(storeName);
 }
@@ -53,48 +152,45 @@ function validatePassword(pwd, isDev) {
   if (isDev && letters !== devPrefix) return false;
   return true;
 }
-function getRandomId() { return Math.random().toString(36).substr(2,9); }
 
-// ========== Llenar países y prefijos ==========
-async function loadCountries() {
-  const url = "https://restcountries.com/v3.1/all";
-  const countrySel = document.getElementById("country");
-  let countryList = [];
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    countryList = data
-      .map(c => {
-        let dial = (c.idd && c.idd.root && c.idd.suffixes) ?
-          c.idd.root + c.idd.suffixes[0] : "";
-        return {
-          name: c.translations.spa?.common || c.name.common,
-          code: c.cca2,
-          dial: dial
-        };
-      })
-      .filter(c => c.dial);
-    countryList.sort((a,b) => a.name.localeCompare(b.name));
-    countrySel.innerHTML = countryList.map(c =>
+// ========== Manejo de Pantallas ==========
+function showScreen(screen) {
+  document.getElementById("register-screen").classList.add("d-none");
+  document.getElementById("login-screen").classList.add("d-none");
+  document.getElementById("main-panel").classList.add("d-none");
+  document.getElementById(screen).classList.remove("d-none");
+  // Limpiar alertas
+  ["register-alerts","login-alerts"].forEach(id => {
+    if(document.getElementById(id)) document.getElementById(id).innerHTML = "";
+  });
+  // Limpiar formularios
+  if(screen==="register-screen") document.getElementById("form-register").reset();
+  if(screen==="login-screen") document.getElementById("form-login").reset();
+}
+
+// ========== Llenar Países ==========
+let countriesLoaded = false;
+function fillCountries() {
+  if (countriesLoaded) return;
+  const sel = document.getElementById("country");
+  sel.innerHTML = '<option value="">-- Selecciona país --</option>' +
+    countriesData.map(c =>
       `<option value="${c.code}" data-dial="${c.dial}">${c.name} (${c.dial})</option>`
     ).join('');
-    countrySel.addEventListener('change', function() {
-      const selected = countrySel.options[countrySel.selectedIndex];
-      document.getElementById("phone-prefix").textContent = selected.getAttribute("data-dial");
-    });
-    // Set initial prefix
-    if (countrySel.selectedIndex >= 0) {
-      document.getElementById("phone-prefix").textContent =
-        countrySel.options[countrySel.selectedIndex].getAttribute("data-dial");
-    }
-  } catch (e) {
-    countrySel.innerHTML = `<option>Error al cargar países</option>`;
-  }
+  countriesLoaded = true;
 }
+document.getElementById("country").addEventListener("click", fillCountries);
+document.getElementById("country").addEventListener("change", function() {
+  const sel = document.getElementById("country");
+  const idx = sel.selectedIndex;
+  document.getElementById("phone-prefix").textContent = idx > 0
+    ? sel.options[idx].getAttribute("data-dial") : "";
+});
 
 // ========== Registro ==========
 async function registerUser(e) {
   e.preventDefault();
+  document.getElementById("register-alerts").innerHTML = "";
   const fullname = document.getElementById("fullname").value.trim();
   const email = document.getElementById("email").value.trim();
   const countrySel = document.getElementById("country");
@@ -104,7 +200,7 @@ async function registerUser(e) {
   const password = document.getElementById("password").value.trim();
   const isDev = password.startsWith("Mpteen");
   if (!validatePassword(password, isDev)) {
-    document.getElementById("register-form").insertAdjacentHTML("beforeend", showAlert("Contraseña inválida."))
+    document.getElementById("register-alerts").innerHTML = showAlert("Contraseña inválida.");
     return;
   }
   const user = {
@@ -116,46 +212,40 @@ async function registerUser(e) {
   const req = usersStore.get(email);
   req.onsuccess = function() {
     if (req.result) {
-      document.getElementById("register-form").insertAdjacentHTML("beforeend", showAlert("El usuario ya existe!"))
+      document.getElementById("register-alerts").innerHTML = showAlert("El usuario ya existe!");
     } else {
       usersStore.add(user).onsuccess = function() {
-        loginUser(email, password, true);
+        showScreen("login-screen");
+        document.getElementById("login-alerts").innerHTML = showAlert("¡Registrado correctamente! Ingresa tus datos para entrar.","success");
       };
     }
   };
 }
 
 // ========== Login ==========
-function loginUser(email, password, skipForm = false) {
+function loginUser(e) {
+  e.preventDefault();
+  document.getElementById("login-alerts").innerHTML = "";
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value.trim();
   const usersStore = getStore("users");
   const req = usersStore.get(email);
   req.onsuccess = function() {
     const user = req.result;
     if (user && user.password === password && !user.blocked) {
       currentUser = user;
-      showMainPanel();
+      showScreen("main-panel");
+      refreshGallery();
+      refreshUsers();
+      refreshShareForm();
     } else {
-      if (!skipForm) {
-        document.getElementById("login-form").insertAdjacentHTML("beforeend", showAlert("Credenciales incorrectas o usuario bloqueado."));
-      }
+      document.getElementById("login-alerts").innerHTML = showAlert("Credenciales incorrectas o usuario bloqueado.");
     }
   };
 }
-
-// ========== Mostrar Panel Principal ==========
-function showMainPanel() {
-  document.getElementById("auth-container").classList.add("d-none");
-  document.getElementById("main-panel").classList.remove("d-none");
-  refreshGallery();
-  refreshUsers();
-  refreshShareForm();
-}
 function logout() {
   currentUser = null;
-  document.getElementById("main-panel").classList.add("d-none");
-  document.getElementById("auth-container").classList.remove("d-none");
-  document.getElementById("form-login").reset();
-  document.getElementById("form-register").reset();
+  showScreen("login-screen");
 }
 
 // ========== Subir Archivos ==========
@@ -381,7 +471,6 @@ function showHelpForm(type) {
     const name = document.getElementById("help-name").value.trim();
     const contact = document.getElementById("help-contact").value.trim();
     if (type === "email") {
-      // EmailJS
       emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
         to_name: "Sr. Desarrollador de mYpuB",
         from_name: name,
@@ -393,7 +482,6 @@ function showHelpForm(type) {
         container.innerHTML = showAlert("Error al enviar email. " + error.text);
       });
     } else {
-      // WhatsApp API
       const msg = encodeURIComponent(`Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el número ${contact}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación, ¡Gracias!`);
       window.open(`https://wa.me/${DEVELOPER_PHONE.replace(/\+/g,"")}?text=${msg}`, "_blank");
       container.innerHTML = showAlert("¡Consulta enviada por WhatsApp!", "success");
@@ -404,25 +492,19 @@ function showHelpForm(type) {
 // ========== EVENTOS ==========
 window.addEventListener("DOMContentLoaded", async function() {
   await openDB();
-  loadCountries();
+  // Pantallas iniciales
+  showScreen("login-screen");
   // Registro
   document.getElementById("form-register").onsubmit = registerUser;
-  document.getElementById("to-login").onclick = function(e) {
+  document.getElementById("to-login-from-register").onclick = function(e) {
     e.preventDefault();
-    document.getElementById("register-form").classList.add("d-none");
-    document.getElementById("login-form").classList.remove("d-none");
-  };
-  document.getElementById("to-register").onclick = function(e) {
-    e.preventDefault();
-    document.getElementById("login-form").classList.add("d-none");
-    document.getElementById("register-form").classList.remove("d-none");
+    showScreen("login-screen");
   };
   // Login
-  document.getElementById("form-login").onsubmit = function(e) {
+  document.getElementById("form-login").onsubmit = loginUser;
+  document.getElementById("to-register-from-login").onclick = function(e) {
     e.preventDefault();
-    const email = document.getElementById("login-email").value.trim();
-    const password = document.getElementById("login-password").value.trim();
-    loginUser(email, password);
+    showScreen("register-screen");
   };
   // Subir archivo
   document.getElementById("upload-form").onsubmit = uploadFile;
