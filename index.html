@@ -59,35 +59,26 @@
     </div>
 
     <!-- Help Modal -->
-    <div class="modal fade" id="helpModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Need Help?</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Need Help?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="helpName" class="form-label">Your Full Name</label>
+                    <input type="text" class="form-control" id="helpName" required>
                 </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="helpName" class="form-label">Your Full Name</label>
-                        <input type="text" class="form-control" id="helpName" required>
-                    </div>
-                    <div class="mb-3" id="helpEmailDiv">
-                        <label for="helpEmail" class="form-label">Your Email</label>
-                        <input type="email" class="form-control" id="helpEmail">
-                    </div>
-                    <div class="mb-3" id="helpWhatsAppDiv" style="display: none;">
-                        <label for="helpWhatsApp" class="form-label">Your WhatsApp Number</label>
-                        <input type="tel" class="form-control" id="helpWhatsApp">
-                    </div>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary" id="emailHelp">Contact via Email</button>
-                        <button class="btn btn-success" id="whatsappHelp">Contact via WhatsApp</button>
-                        <button class="btn btn-primary" id="sendHelpRequest" style="display: none;">Send Request</button>
-                    </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" id="emailHelp">Contact via Email</button>
+                    <button class="btn btn-success" id="whatsappHelp">Contact via WhatsApp</button>
                 </div>
             </div>
         </div>
     </div>
+</div>
     <!-- Main App Container (hidden initially) -->
     <div id="mainContainer" class="container-fluid d-none">
         <!-- Navigation -->
