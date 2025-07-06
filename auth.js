@@ -9,33 +9,13 @@ class Auth {
         const registrationForm = document.getElementById('registrationForm');
         registrationForm.addEventListener('submit', (e) => this.handleRegistration(e));
 
-        // Help modal listeners
+        // Help buttons
         document.getElementById('helpBtn').addEventListener('click', () => {
             new bootstrap.Modal(document.getElementById('helpModal')).show();
         });
 
-        document.getElementById('emailHelp').addEventListener('click', () => {
-            const name = document.getElementById('helpName').value;
-            if (!name) {
-                alert('Please enter your name first');
-                return;
-            }
-            const subject = encodeURIComponent('mYpuB Help Request');
-            const body = encodeURIComponent(`Hola Sr. Desarrollador de mYpub, el usuario ${name}, solicita instrucciones para crear una cuenta de acceso a mYpuB y más cosas sobre la aplicación, Gracias!`);
-            window.location.href = `mailto:enzemajr@gmail.com?subject=${subject}&body=${body}`;
-            bootstrap.Modal.getInstance(document.getElementById('helpModal')).hide();
-        });
-
-        document.getElementById('whatsappHelp').addEventListener('click', () => {
-            const name = document.getElementById('helpName').value;
-            if (!name) {
-                alert('Please enter your name first');
-                return;
-            }
-            const message = encodeURIComponent(`Hola Sr. Desarrollador de mYpub, el usuario ${name}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación, Gracias!`);
-            window.open(`https://wa.me/240222084663?text=${message}`, '_blank');
-            bootstrap.Modal.getInstance(document.getElementById('helpModal')).hide();
-        });
+        document.getElementById('emailHelp').addEventListener('click', () => this.showEmailHelpForm());
+        document.getElementById('whatsappHelp').addEventListener('click', () => this.showWhatsAppHelpForm());
     }
 
     validatePassword(password, isDeveloper = false) {
@@ -52,8 +32,6 @@ class Auth {
             fullName: document.getElementById('fullName').value,
             email: document.getElementById('email').value,
             country: document.getElementById('country').value,
-            city: document.getElementById('city').value,
-            street: document.getElementById('street').value,
             phone: document.getElementById('phonePrefix').textContent + document.getElementById('phone').value,
             password: document.getElementById('password').value
         };
@@ -76,6 +54,25 @@ class Auth {
             this.showMainApp();
         } catch (error) {
             alert('Registration failed: ' + error.message);
+        }
+    }
+
+    showEmailHelpForm() {
+        const email = prompt('Please enter your email:');
+        const name = prompt('Please enter your full name:');
+        
+        if (email && name) {
+            window.location.href = `mailto:enzemajr@gmail.com?subject=mYpuB Help Request&body=Hola Sr. Desarrollador de mYpub, el usuario ${name}, con el email ${email}, solicita instrucciones para crear una cuenta de acceso a mYpuB y más cosas sobre la aplicación, Gracias!`;
+        }
+    }
+
+    showWhatsAppHelpForm() {
+        const phone = prompt('Please enter your WhatsApp number:');
+        const name = prompt('Please enter your full name:');
+        
+        if (phone && name) {
+            const message = encodeURIComponent(`Hola Sr. Desarrollador de mYpub, el usuario ${name}, con el número ${phone}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación, Gracias!`);
+            window.open(`https://wa.me/240222084663?text=${message}`, '_blank');
         }
     }
 
