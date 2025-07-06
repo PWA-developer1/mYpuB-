@@ -7,3 +7,6 @@
   border: 1px solid #eee;
   border-radius: 6px;
 }
+.d-none {
+  display: none !important;
+}
