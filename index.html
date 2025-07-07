@@ -3,763 +3,729 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mYpuB - Plataforma de Medios Sociales</title>
-    
+    <title>mYpuB - Sube y comparte tus imágenes y videos</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         :root {
-            --primary-color: #0d6efd;
-            --secondary-color: #6c757d;
-            --success-color: #198754;
-            --info-color: #0dcaf0;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --dark-color: #2d3436;
+            --light-color: #f5f6fa;
+            --success-color: #00b894;
+            --danger-color: #d63031;
+            --warning-color: #fdcb6e;
+            --info-color: #0984e3;
         }
-
+        
         body {
             background-color: #f8f9fa;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .auth-title {
-            font-family: Georgia, serif;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .app-logo {
-            font-family: Georgia, serif;
-            font-weight: bold;
-            font-size: 2.5rem;
-            background: linear-gradient(45deg, var(--primary-color), var(--info-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: none;
-        }
-
+        
         .auth-container {
-            max-width: 500px;
-            margin: 2rem auto;
-            padding: 2rem;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .auth-form {
-            padding: 2rem;
-            border-radius: 10px;
-            background: white;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .form-control, .form-select {
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            border: 1px solid #dee2e6;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-
-        .btn {
-            border-radius: 8px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, var(--primary-color), #0056b3);
-            border: none;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
-        }
-
-        .help-panel {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 1000;
-        }
-
-        .help-panel .btn {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .media-card {
+            max-width: 600px;
+            margin: 5rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             border-radius: 15px;
             overflow: hidden;
-            transition: transform 0.3s ease;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-
-        .media-card:hover {
-            transform: translateY(-5px);
+        
+        .auth-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            text-align: center;
         }
-
-        .card {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        
+        .auth-body {
+            background-color: white;
+            padding: 2rem;
         }
-
-        .card-body {
-            padding: 1.5rem;
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(108, 92, 231, 0.25);
         }
-
-        .navbar {
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
-
-        .navbar-brand {
-            font-family: Georgia, serif;
-            font-weight: bold;
-            font-size: 1.5rem;
+        
+        .btn-primary:hover {
+            background-color: #5a4bd1;
+            border-color: #5a4bd1;
         }
-
-        .nav-link {
-            font-weight: 500;
-            padding: 0.5rem 1rem;
+        
+        .help-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            width: 90%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        
+        .help-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+        
+        .password-strength {
+            height: 5px;
+            margin-top: 5px;
+            border-radius: 5px;
             transition: all 0.3s ease;
         }
-
-        .nav-link:hover {
-            color: var(--primary-color) !important;
-            transform: translateY(-1px);
+        
+        .strength-0 {
+            width: 0%;
+            background-color: var(--danger-color);
         }
-
-        .hidden {
-            display: none;
+        
+        .strength-1 {
+            width: 25%;
+            background-color: #ff7675;
         }
-
-        .section-content {
-            padding: 2rem;
-            display: none;
+        
+        .strength-2 {
+            width: 50%;
+            background-color: #fdcb6e;
         }
-
-        .section-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        
+        .strength-3 {
+            width: 75%;
+            background-color: #55efc4;
         }
-
+        
+        .strength-4 {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+        
+        .country-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+        }
+        
+        /* Animaciones */
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-
-        .like-counter {
-            font-size: 0.9rem;
-            color: #6c757d;
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        /* Panel principal oculto inicialmente */
+        #mainPanel {
+            display: none;
+        }
+        
+        /* Estilos para la barra de navegación */
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .nav-link {
             font-weight: 500;
         }
-
-        .comment-section {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--danger-color);
-            color: white;
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
-
-        /* Dark theme styles */
-        .dark-theme {
-            background-color: #1a1a1a;
-            color: #ffffff;
+        
+        /* Estilos para las tarjetas de archivos */
+        .file-card {
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
-
-        .dark-theme .card {
-            background-color: #2d2d2d;
-            border-color: #404040;
+        
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-
-        .dark-theme .navbar {
-            background-color: #2d2d2d !important;
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 5px 5px 0 0;
         }
-
-        .dark-theme .form-control {
-            background-color: #2d2d2d;
-            border-color: #404040;
-            color: #ffffff;
+        
+        .video-thumbnail {
+            position: relative;
         }
-
-        /* Responsive styles */
-        @media (max-width: 768px) {
-            .auth-container {
-                margin: 1rem;
-                padding: 1rem;
-            }
-
-            .navbar {
-                padding: 0.5rem 1rem;
-            }
-
-            .help-panel {
-                bottom: 15px;
-                right: 15px;
-            }
+        
+        .video-play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: white;
+            opacity: 0.8;
+        }
+        
+        .file-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .like-count {
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        /* Dropzone para subir archivos */
+        .dropzone {
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .dropzone:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(108, 92, 231, 0.05);
+        }
+        
+        .dropzone.active {
+            border-color: var(--success-color);
+            background-color: rgba(0, 184, 148, 0.05);
+        }
+        
+        /* Pestañas del panel principal */
+        .module-tab {
+            display: none;
+        }
+        
+        .module-tab.active {
+            display: block;
+        }
+        
+        /* Estilos para el modal de compartir */
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            width: 90%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        
+        .share-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+        
+        /* Estilos para la sección de información */
+        .info-card {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .developer-info {
+            background-color: rgba(108, 92, 231, 0.1);
+            border-radius: 5px;
+            padding: 15px;
         }
     </style>
 </head>
 <body>
-<body>
-    <!-- Alert Container -->
-    <div id="alertContainer" class="position-fixed top-0 start-50 translate-middle-x" style="z-index: 1050; margin-top: 1rem;"></div>
-
-    <!-- Registro -->
-    <div id="registerForm" class="container">
-        <div class="auth-container">
-            <h2 class="text-center auth-title">
-                <i class="bi bi-person-plus-fill me-2"></i>
-                Regístrate en <span class="app-logo">mYpuB</span>
-            </h2>
-            <form id="registrationForm" class="auth-form">
-                <div class="mb-4">
-                    <label for="fullName" class="form-label">
-                        <i class="bi bi-person-fill me-2"></i>Nombre completo
-                    </label>
-                    <input type="text" class="form-control" id="fullName" required>
-                </div>
-                <div class="mb-4">
-                    <label for="email" class="form-label">
-                        <i class="bi bi-envelope-fill me-2"></i>Correo electrónico (Gmail)
-                    </label>
-                    <input type="email" class="form-control" id="email" required 
-                           pattern=".*@gmail\.com$" title="Debe ser una dirección de Gmail">
-                </div>
-                <div class="mb-4">
-                    <label for="gender" class="form-label">
-                        <i class="bi bi-gender-ambiguous me-2"></i>Sexo
-                    </label>
-                    <select class="form-select" id="gender" required>
-                        <option value="">Seleccione...</option>
-                        <option value="M">Hombre</option>
-                        <option value="F">Mujer</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="country" class="form-label">
-                        <i class="bi bi-globe2 me-2"></i>País
-                    </label>
-                    <select class="form-select" id="country" required>
-                        <option value="">Seleccione un país...</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label for="phone" class="form-label">
-                        <i class="bi bi-telephone-fill me-2"></i>Teléfono
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text" id="phonePrefix">+</span>
-                        <input type="tel" class="form-control" id="phone" required>
+    <!-- Panel de Autenticación -->
+    <div id="authPanel">
+        <div class="auth-container fade-in">
+            <div class="auth-header">
+                <h1><i class="bi bi-cloud-arrow-up"></i> mYpuB</h1>
+                <p class="mb-0">Sube y comparte tus imágenes y videos</p>
+            </div>
+            <div class="auth-body">
+                <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Iniciar Sesión</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrarse</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="authTabsContent">
+                    <!-- Formulario de Login -->
+                    <div class="tab-pane fade show active" id="login" role="tabpanel">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label">Correo electrónico</label>
+                                <input type="email" class="form-control" id="loginEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Formulario de Registro -->
+                    <div class="tab-pane fade" id="register" role="tabpanel">
+                        <form id="registerForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fullName" class="form-label">Nombre completo</label>
+                                    <input type="text" class="form-control" id="fullName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Correo electrónico (Gmail)</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                    <div class="invalid-feedback">Debe ser una dirección de Gmail válida.</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="gender" class="form-label">Sexo</label>
+                                    <select class="form-select" id="gender" required>
+                                        <option value="" selected disabled>Seleccionar...</option>
+                                        <option value="male">Hombre</option>
+                                        <option value="female">Mujer</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="country" class="form-label">País</label>
+                                    <select class="form-select" id="country" required>
+                                        <option value="" selected disabled>Cargando países...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="phonePrefix">+</span>
+                                    <input type="tel" class="form-control" id="phone" aria-describedby="phonePrefix" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" required>
+                                <div class="password-strength strength-0" id="passwordStrength"></div>
+                                <small class="text-muted">Debe tener 12 caracteres: 6 letras (primera mayúscula), 4 números y 2 símbolos (@#&).</small>
+                                <div class="invalid-feedback">La contraseña no cumple con los requisitos.</div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">Acepto los términos y condiciones</label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary">Registrarse</button>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" class="btn btn-link" id="helpBtn">Ayuda <i class="bi bi-question-circle"></i></button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">
-                        <i class="bi bi-lock-fill me-2"></i>Contraseña
-                    </label>
-                    <input type="password" class="form-control" id="password" required>
-                    <div class="form-text text-muted">
-                        <small>
-                            <i class="bi bi-info-circle me-1"></i>
-                            12 caracteres: 6 letras (primera mayúscula), 4 números, 2 símbolos (@#&)
-                        </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel de Ayuda -->
+    <div class="help-overlay" id="helpOverlay"></div>
+    <div class="help-panel" id="helpPanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Ayuda y Soporte</h5>
+            <button type="button" class="btn-close" id="closeHelpBtn"></button>
+        </div>
+        <ul class="nav nav-tabs mb-3" id="helpTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#emailHelp" type="button" role="tab">Email</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsappHelp" type="button" role="tab">WhatsApp</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="helpTabsContent">
+            <div class="tab-pane fade show active" id="emailHelp" role="tabpanel">
+                <form id="emailHelpForm">
+                    <div class="mb-3">
+                        <label for="helpName" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="helpName" required>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">
-                    <i class="bi bi-person-plus me-2"></i>Registrar
-                </button>
-                <div class="text-center">
-                    <a href="#" id="goToLogin" class="text-decoration-none">
-                        <i class="bi bi-box-arrow-in-right me-1"></i>
-                        ¿Ya tienes una cuenta? Inicia sesión
-                    </a>
-                </div>
-            </form>
+                    <div class="mb-3">
+                        <label for="helpEmail" class="form-label">Correo para respuesta</label>
+                        <input type="email" class="form-control" id="helpEmail" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Enviar consulta por Email</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="tab-pane fade" id="whatsappHelp" role="tabpanel">
+                <form id="whatsappHelpForm">
+                    <div class="mb-3">
+                        <label for="helpWhatsappName" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="helpWhatsappName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="helpWhatsappNumber" class="form-label">Número de WhatsApp</label>
+                        <input type="tel" class="form-control" id="helpWhatsappNumber" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Enviar consulta por WhatsApp</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-
-    <!-- Login -->
-    <div id="loginForm" class="container hidden">
-        <div class="auth-container">
-            <h2 class="text-center auth-title">
-                <i class="bi bi-box-arrow-in-right me-2"></i>
-                Inicie la sesión en <span class="app-logo">mYpuB</span>
-            </h2>
-            <form id="loginFormElement" class="auth-form">
-                <div class="mb-4">
-                    <label for="loginEmail" class="form-label">
-                        <i class="bi bi-envelope-fill me-2"></i>Correo electrónico
-                    </label>
-                    <input type="email" class="form-control" id="loginEmail" required>
-                </div>
-                <div class="mb-4">
-                    <label for="loginPassword" class="form-label">
-                        <i class="bi bi-lock-fill me-2"></i>Contraseña
-                    </label>
-                    <input type="password" class="form-control" id="loginPassword" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 mb-3">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
-                </button>
-                <div class="text-center">
-                    <a href="#" id="goToRegister" class="text-decoration-none">
-                        <i class="bi bi-person-plus me-1"></i>
-                        ¿No tienes una cuenta? Regístrate
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Panel Principal -->
-    <div id="mainPanel" class="hidden">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    
+    <!-- Panel Principal (oculto inicialmente) -->
+    <div id="mainPanel">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand" href="#">
-                    <i class="bi bi-share-fill me-2"></i>mYpuB
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#navbarNav">
+                <a class="navbar-brand" href="#"><i class="bi bi-cloud-arrow-up"></i> mYpuB</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-section="upload">
-                                <i class="bi bi-upload me-1"></i>SUBIR TU
-                            </a>
+                            <a class="nav-link active" href="#" data-module="upload"><i class="bi bi-upload"></i> Subir</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-section="gallery">
-                                <i class="bi bi-images me-1"></i>GALERÍA
-                            </a>
+                            <a class="nav-link" href="#" data-module="gallery"><i class="bi bi-images"></i> Galería</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-section="share">
-                                <i class="bi bi-share me-1"></i>COMPARTIR
-                            </a>
-                        </li>
-                        <li class="nav-item dev-only">
-                            <a class="nav-link" href="#" data-section="userManagement">
-                                <i class="bi bi-people-fill me-1"></i>GESTIÓN DE USUARIOS
-                            </a>
+                            <a class="nav-link" href="#" data-module="share"><i class="bi bi-share"></i> Compartir</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" data-section="info">
-                                <i class="bi bi-info-circle me-1"></i>INFÓRMATE
-                            </a>
+                            <a class="nav-link" href="#" data-module="users" id="usersModuleLink" style="display: none;"><i class="bi bi-people"></i> Usuarios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-module="info"><i class="bi bi-info-circle"></i> Infórmate</a>
                         </li>
                     </ul>
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="themeToggle">
-                                <i class="bi bi-moon-fill"></i>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="logoutBtn">
-                                <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
-                            </a>
-                        </li>
-                    </ul>
+                    <div class="d-flex align-items-center">
+                        <div class="user-avatar me-2" id="userAvatar">U</div>
+                        <button class="btn btn-outline-light" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+                    </div>
                 </div>
             </div>
         </nav>
-
-        <!-- Contenido Principal -->
+        
         <div class="container mt-4">
-            <!-- Sección de Subida -->
-            <div id="uploadSection" class="section-content active">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <i class="bi bi-cloud-upload-fill me-2"></i>
-                            Subir Contenido
-                        </h3>
-                        <form id="uploadForm" class="mt-4">
-                            <div class="mb-4">
-                                <label for="mediaFile" class="form-label">
-                                    <i class="bi bi-file-earmark-media me-2"></i>
-                                    Seleccionar archivo
-                                </label>
-                                <input type="file" class="form-control" id="mediaFile" 
-                                       accept="image/*,video/*" required>
-                                <div class="form-text">
-                                    Formatos permitidos: imágenes (JPG, PNG, GIF) y videos (MP4, WebM, OGG)
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="form-label">
-                                    <i class="bi bi-shield-lock me-2"></i>
-                                    Privacidad
-                                </label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="privacy" 
-                                           id="public" value="public" checked>
-                                    <label class="form-check-label" for="public">
-                                        <i class="bi bi-globe2 me-1"></i>
-                                        Público (visible para todos)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="privacy" 
-                                           id="private" value="private">
-                                    <label class="form-check-label" for="private">
-                                        <i class="bi bi-lock-fill me-1"></i>
-                                        Privado (solo visible para ti)
-                                    </label>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-cloud-upload me-2"></i>
-                                Subir archivo
-                            </button>
-                        </form>
-                    </div>
-                </div>
+            <div class="alert alert-success fade show" role="alert" id="welcomeAlert">
+                <i class="bi bi-check-circle-fill"></i> <span id="welcomeMessage">Bienvenido a mYpuB</span>
             </div>
-
-            <!-- Sección de Galería -->
-            <div id="gallerySection" class="section-content">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <i class="bi bi-images me-2"></i>
-                            Galería
-                        </h3>
-                        <div class="row mt-4">
-                            <div class="col-md-4">
-                                <div class="input-group mb-3">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-search"></i>
-                                    </span>
-                                    <input type="text" class="form-control" id="mediaSearch" 
-                                           placeholder="Buscar contenido...">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <select class="form-select" id="mediaFilter">
-                                    <option value="all">Todos los archivos</option>
-                                    <option value="my-media">Mis archivos</option>
-                                    <option value="shared-with-me">Compartidos conmigo</option>
-                                    <option value="public">Archivos públicos</option>
-                                    <option value="private">Archivos privados</option>
-                                    <option value="most-liked">Más gustados</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div id="mediaGallery" class="row g-4">
-                    <!-- El contenido de la galería se cargará dinámicamente -->
-                </div>
-            </div>
-
-            <!-- Sección de Compartir -->
-            <div id="shareSection" class="section-content">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <i class="bi bi-share-fill me-2"></i>
-                            Compartir Archivos
-                        </h3>
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="userSelect" class="form-label">
-                                        <i class="bi bi-person-fill me-2"></i>
-                                        Seleccionar Usuario
-                                    </label>
-                                    <select class="form-select" id="userSelect">
-                                        <option value="">Seleccione un usuario...</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-4">
-                                    <label for="mediaSelect" class="form-label">
-                                        <i class="bi bi-file-earmark-media me-2"></i>
-                                        Seleccionar Archivo
-                                    </label>
-                                    <select class="form-select" id="mediaSelect">
-                                        <option value="">Seleccione un archivo...</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <button id="shareBtn" class="btn btn-primary">
-                            <i class="bi bi-share me-2"></i>
-                            Compartir
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección de Gestión de Usuarios -->
-            <div id="userManagementSection" class="section-content">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">
-                            <i class="bi bi-people-fill me-2"></i>
-                            Gestión de Usuarios
-                        </h3>
-                        <div id="usersList" class="mt-4">
-                            <!-- La lista de usuarios se cargará dinámicamente -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección de Información -->
-            <div id="infoSection" class="section-content">
+            
+            <!-- Módulo de Subir -->
+            <div class="module-tab active" id="uploadModule">
                 <div class="row">
-                    <div class="col-md-8">
+                    <div class="col-md-8 mx-auto">
                         <div class="card">
                             <div class="card-body">
-                                <h3 class="card-title">
-                                    <i class="bi bi-info-circle-fill me-2"></i>
-                                    Sobre mYpuB
-                                </h3>
-                                <p class="lead mt-3">
-                                    Una plataforma moderna para compartir imágenes y videos de forma segura y social.
-                                </p>
-                                
-                                <h4 class="mt-4">
-                                    <i class="bi bi-person-badge me-2"></i>
-                                    Desarrollador
-                                </h4>
-                                <ul class="list-unstyled mt-3">
-                                    <li class="mb-2">
-                                        <i class="bi bi-person-fill me-2"></i>
-                                        <strong>Nombre:</strong> Tarciano ENZEMA NCHAMA
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-mortarboard-fill me-2"></i>
-                                        <strong>Formación:</strong> Finalista universitario de la UNGE
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-building me-2"></i>
-                                        <strong>Facultad:</strong> Ciencias económicas gestión y administración
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-pc-display me-2"></i>
-                                        <strong>Departamento:</strong> Informática de gestión empresarial
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-envelope-fill me-2"></i>
-                                        <strong>Contacto:</strong> 
-                                        <a href="mailto:enzemajr@gmail.com">enzemajr@gmail.com</a>
-                                    </li>
-                                    <li class="mb-2">
-                                        <i class="bi bi-calendar-check me-2"></i>
-                                        <strong>Fecha final del desarrollo:</strong> 06/07/2025
-                                    </li>
-                                </ul>
+                                <h5 class="card-title"><i class="bi bi-upload"></i> Subir archivos</h5>
+                                <p class="card-text">Selecciona imágenes o videos para compartir con la comunidad.</p>
+                                <div class="dropzone border rounded p-5 mb-3 text-center" id="uploadDropzone">
+                                    <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
+                                    <p>Arrastra tus archivos aquí o haz clic para seleccionarlos</p>
+                                    <p class="small text-muted">Formatos soportados: JPG, PNG, GIF, MP4, AVI, MOV</p>
+                                </div>
+                                <input type="file" id="fileInput" class="d-none" multiple accept="image/*,video/*">
+                                <div class="mb-3">
+                                    <label for="fileVisibility" class="form-label">Visibilidad:</label>
+                                    <select class="form-select" id="fileVisibility">
+                                        <option value="public">Público (visible y descargable por todos)</option>
+                                        <option value="private">Privado (solo visible para otros usuarios)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fileDescription" class="form-label">Descripción (opcional):</label>
+                                    <textarea class="form-control" id="fileDescription" rows="2"></textarea>
+                                </div>
+                                <button class="btn btn-primary" id="selectFilesBtn"><i class="bi bi-folder2-open"></i> Seleccionar archivos</button>
+                                <button class="btn btn-success" id="uploadFilesBtn" disabled><i class="bi bi-cloud-upload"></i> Subir archivos</button>
+                                <div class="progress mt-3" id="uploadProgress" style="display: none; height: 20px;">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <div id="uploadStatus" class="mt-2 small"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div id="statisticsContainer">
-                            <!-- Las estadísticas se cargarán dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Módulo de Galería -->
+            <div class="module-tab" id="galleryModule">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h4><i class="bi bi-images"></i> Galería de archivos</h4>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="gallerySearch" placeholder="Buscar archivos...">
+                            <button class="btn btn-outline-secondary" type="button" id="searchBtn"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="galleryFiles">
+                    <!-- Los archivos se cargarán aquí dinámicamente -->
+                    <div class="col-12 text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando galería...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Módulo de Compartir -->
+            <div class="module-tab" id="shareModule">
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-share"></i> Compartir archivos</h5>
+                                <p class="card-text">Selecciona un usuario y un archivo para compartir.</p>
+                                
+                                <div class="mb-3">
+                                    <label for="shareUser" class="form-label">Usuario a compartir:</label>
+                                    <select class="form-select" id="shareUser" required>
+                                        <option value="" selected disabled>Cargando usuarios...</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="shareFile" class="form-label">Archivo a compartir:</label>
+                                    <select class="form-select" id="shareFile" required>
+                                        <option value="" selected disabled>Cargando tus archivos...</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="shareMessage" class="form-label">Mensaje (opcional):</label>
+                                    <textarea class="form-control" id="shareMessage" rows="2"></textarea>
+                                </div>
+                                
+                                <button class="btn btn-primary" id="shareBtn" disabled><i class="bi bi-send"></i> Compartir archivo</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-collection"></i> Archivos compartidos contigo</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="sharedFilesTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Archivo</th>
+                                                <th>De</th>
+                                                <th>Fecha</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Módulo de Gestión de Usuarios (solo para desarrollador) -->
+            <div class="module-tab" id="usersModule">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-people"></i> Gestión de Usuarios</h5>
+                                <p class="card-text">Aquí puedes gestionar los usuarios del sistema.</p>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="usersTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>Email</th>
+                                                <th>País</th>
+                                                <th>Teléfono</th>
+                                                <th>Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Módulo de Información -->
+            <div class="module-tab" id="infoModule">
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card info-card">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="bi bi-info-circle"></i> Acerca de mYpuB</h5>
+                                <p class="card-text">mYpuB es una plataforma para compartir imágenes y videos con otros usuarios de manera sencilla y segura.</p>
+                                
+                                <h6 class="mt-4"><i class="bi bi-question-circle"></i> ¿Cómo funciona?</h6>
+                                <ul>
+                                    <li>Sube tus imágenes o videos desde el módulo "Subir"</li>
+                                    <li>Elige si quieres que sean públicos o privados</li>
+                                    <li>Explora la galería para ver lo que otros han compartido</li>
+                                    <li>Interactúa dando "Me gusta" o comentando</li>
+                                    <li>Comparte archivos específicos con otros usuarios</li>
+                                </ul>
+                                
+                                <div class="developer-info mt-4">
+                                    <h6><i class="bi bi-person"></i> Información del desarrollador</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Nombre completo:</strong> Tarciano ENZEMA NCHAMA</li>
+                                        <li><strong>Formación académica:</strong> Finalista universitario de la UNGE</li>
+                                        <li><strong>Facultad:</strong> Ciencias económicas gestión y administración</li>
+                                        <li><strong>Departamento:</strong> Informática de gestión empresarial</li>
+                                        <li><strong>Contacto:</strong> enzemajr@gmail.com</li>
+                                        <li><strong>Fecha final del desarrollo:</strong> 06/07/2025</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    <!-- Panel de Ayuda -->
-    <div id="helpPanel" class="help-panel">
-        <button class="btn btn-info rounded-circle shadow-lg" id="helpBtn" 
-                data-bs-toggle="tooltip" data-bs-placement="left" title="¿Necesitas ayuda?">
-            <i class="bi bi-question-lg fs-4"></i>
-        </button>
-        <div id="helpOptions" class="card mt-2 hidden" style="width: 250px;">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="bi bi-headset me-2"></i>
-                    ¿Cómo podemos ayudarte?
-                </h5>
-                <button class="btn btn-outline-primary mb-2 w-100" id="emailHelpBtn">
-                    <i class="bi bi-envelope-fill me-2"></i>
-                    Consulta por Email
-                </button>
-                <button class="btn btn-outline-success w-100" id="whatsappHelpBtn">
-                    <i class="bi bi-whatsapp me-2"></i>
-                    Consulta por WhatsApp
-                </button>
-            </div>
-        </div>
     </div>
-
-    <!-- Modal de Ayuda por Email -->
-    <div class="modal fade" id="emailHelpModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+    
+    <!-- Modal para visualización de archivos -->
+    <div class="modal fade" id="fileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-envelope-fill me-2"></i>
-                        Consulta por Email
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title" id="fileModalTitle">Archivo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="emailHelpForm">
-                        <div class="mb-3">
-                            <label for="helpName" class="form-label">
-                                <i class="bi bi-person-fill me-2"></i>
-                                Nombre completo
-                            </label>
-                            <input type="text" class="form-control" id="helpName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="helpEmail" class="form-label">
-                                <i class="bi bi-envelope-fill me-2"></i>
-                                Email
-                            </label>
-                            <input type="email" class="form-control" id="helpEmail" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bi bi-send-fill me-2"></i>
-                                Enviar Consulta
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Ayuda por WhatsApp -->
-    <div class="modal fade" id="whatsappHelpModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-whatsapp me-2"></i>
-                        Consulta por WhatsApp
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="whatsappHelpForm">
-                        <div class="mb-3">
-                            <label for="whatsappName" class="form-label">
-                                <i class="bi bi-person-fill me-2"></i>
-                                Nombre completo
-                            </label>
-                            <input type="text" class="form-control" id="whatsappName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="whatsappNumber" class="form-label">
-                                <i class="bi bi-phone-fill me-2"></i>
-                                Número de WhatsApp
-                            </label>
-                            <input type="tel" class="form-control" id="whatsappNumber" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-whatsapp me-2"></i>
-                                Enviar Consulta
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Loading Spinner Modal -->
-    <div class="modal fade" id="loadingModal" data-bs-backdrop="static" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content bg-transparent border-0">
-                <div class="modal-body text-center text-white">
-                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <div class="modal-body text-center" id="fileModalContent">
+                    <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Cargando...</span>
                     </div>
-                    <h5 class="mt-3 text-primary">Procesando...</h5>
+                </div>
+                <div class="modal-footer">
+                    <div class="me-auto">
+                        <span id="fileLikesCount">0</span> <i class="bi bi-hand-thumbs-up"></i>
+                        <span class="ms-3" id="fileOwner">Usuario</span>
+                        <span class="ms-3" id="fileDate">Fecha</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="likeBtn"><i class="bi bi-hand-thumbs-up"></i> Me gusta</button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="downloadBtn"><i class="bi bi-download"></i> Descargar</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="deleteBtn" style="display: none;"><i class="bi bi-trash"></i> Eliminar</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- SweetAlert2 para alertas más elegantes -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Modal para confirmación de acciones -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalTitle">Confirmar acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="confirmModalBody">
+                    ¿Estás seguro de que deseas realizar esta acción?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
-    <!-- Main JavaScript -->
+    <!-- Toast para mensajes -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toastTitle">Mensaje</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Mensaje de prueba
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Nuestro archivo JS -->
     <script src="main.js"></script>
-
-    <script>
-        // Inicializar todos los tooltips
-        document.addEventListener('DOMContentLoaded', function() {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        });
-
-        // Función para mostrar el spinner de carga
-        function showLoading() {
-            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            loadingModal.show();
-        }
-
-        // Función para ocultar el spinner de carga
-        function hideLoading() {
-            const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
-            if (loadingModal) {
-                loadingModal.hide();
-            }
-        }
-
-        // Mejorar las alertas usando SweetAlert2
-        function showAlert(title, text, icon = 'info') {
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: icon,
-                confirmButtonColor: '#0d6efd',
-                confirmButtonText: 'Aceptar'
-            });
-        }
-    </script>
 </body>
 </html>
