@@ -1,1054 +1,1558 @@
-// Inicialización de IndexedDB
-let db;
-const DB_NAME = 'mYpuBDB';
-const DB_VERSION = 1;
-
-// Inicializar la base de datos cuando se carga la página
-document.addEventListener('DOMContentLoaded', () => {
-    initDB();
-});
-
-const initDB = () => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = (event) => {
-        console.error('Error al abrir la base de datos:', event.target.error);
-    };
-
-    request.onupgradeneeded = (event) => {
-        db = event.target.result;
-
-        // Crear almacén de usuarios si no existe
-        if (!db.objectStoreNames.contains('users')) {
-            const userStore = db.createObjectStore('users', { keyPath: 'email' });
-            userStore.createIndex('fullName', 'fullName', { unique: false });
-            userStore.createIndex('isDeveloper', 'isDeveloper', { unique: false });
-        }
-
-        // Crear almacén de medios si no existe
-        if (!db.objectStoreNames.contains('media')) {
-            const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
-            mediaStore.createIndex('userId', 'userId', { unique: false });
-            mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-    };
-
-    request.onsuccess = (event) => {
-        db = event.target.result;
-        console.log('Base de datos inicializada correctamente');
-        setupEventListeners();
-        initializeUI();
-    };
-};
-
-// Inicialización de la UI
-const initializeUI = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-        showMainPanel();
-        showWelcomeMessage(currentUser);
-    } else {
-        showLoginForm();
-    }
-};
-
-// Configuración de los event listeners
-const setupEventListeners = () => {
-    // Navegación entre formularios
-    document.getElementById('goToLogin').addEventListener('click', (e) => {
-        e.preventDefault();
-        showLoginForm();
-    });
-
-    document.getElementById('goToRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        showRegisterForm();
-    });
-
-    // Manejo de formularios
-    document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
-    document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-
-    // Funcionalidad de ayuda
-    document.getElementById('helpBtn').addEventListener('click', toggleHelpPanel);
-    document.getElementById('emailHelpBtn').addEventListener('click', showEmailHelpModal);
-    document.getElementById('whatsappHelpBtn').addEventListener('click', showWhatsappHelpModal);
-    document.getElementById('emailHelpForm').addEventListener('submit', handleEmailHelp);
-    document.getElementById('whatsappHelpForm').addEventListener('submit', handleWhatsappHelp);
-
-    // Navegación del panel principal
-    document.querySelectorAll('[data-section]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSection(e.target.getAttribute('data-section'));
-        });
-    });
-
-    // Manejo de subida de archivos
-    document.getElementById('uploadForm').addEventListener('submit', handleMediaUpload);
-};
-
-// Manejo del registro de usuarios
-const handleRegistration = async (e) => {
-    e.preventDefault();
-
-    const fullName = document.getElementById('fullName').value;
-    const email = document.getElementById('email').value;
-    const gender = document.getElementById('gender').value;
-    const country = document.getElementById('country').value;
-    const phone = document.getElementById('phonePrefix').textContent + document.getElementById('phone').value;
-    const password = document.getElementById('password').value;
-
-    // Validaciones
-    if (!email.endsWith('@gmail.com')) {
-        alert('El correo electrónico debe ser de Gmail');
-        return;
-    }
-
-    // Validar contraseña
-    const passwordRegex = /^[A-Z][a-zA-Z]{5}[0-9]{4}[@#&]{2}$/;
-    if (!passwordRegex.test(password)) {
-        alert('La contraseña no cumple con los requisitos');
-        return;
-    }
-
-    const isDeveloper = password.startsWith('Mpteen');
-
-    const userData = {
-        fullName,
-        email,
-        gender,
-        country,
-        phone,
-        password,
-        isDeveloper
-    };
-
-    try {
-        const transaction = db.transaction(['users'], 'readwrite');
-        const userStore = transaction.objectStore('users');
-        await userStore.add(userData);
+// Esperar a que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    let currentUser = null;
+    let selectedFiles = [];
+    let currentFileView = null;
+    let currentAction = null;
+    
+    // Inicializar componentes de Bootstrap
+    const toastEl = document.getElementById('toast');
+    const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+    const fileModal = new bootstrap.Modal(document.getElementById('fileModal'));
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    
+    // Mostrar mensaje toast
+    function showToast(title, message, isError = false) {
+        const toastTitle = document.getElementById('toastTitle');
+        const toastMessage = document.getElementById('toastMessage');
         
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-        showWelcomeMessage(userData);
-        showMainPanel();
-    } catch (error) {
-        alert('Error al registrar el usuario: ' + error.message);
-    }
-};
-
-// Manejo del inicio de sesión
-const handleLogin = async (e) => {
-    e.preventDefault();
-
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
-    try {
-        const transaction = db.transaction(['users'], 'readonly');
-        const userStore = transaction.objectStore('users');
-        const user = await userStore.get(email);
-
-        if (user && user.password === password) {
-            localStorage.setItem('currentUser', JSON.stringify(user));
-            showWelcomeMessage(user);
-            showMainPanel();
+        toastTitle.textContent = title;
+        toastMessage.textContent = message;
+        
+        // Cambiar color según si es error o no
+        const toastHeader = toastEl.querySelector('.toast-header');
+        if (isError) {
+            toastHeader.classList.add('bg-danger', 'text-white');
+            toastHeader.classList.remove('bg-success');
         } else {
-            alert('Credenciales inválidas');
+            toastHeader.classList.add('bg-success', 'text-white');
+            toastHeader.classList.remove('bg-danger');
         }
-    } catch (error) {
-        alert('Error al iniciar sesión: ' + error.message);
+        
+        toast.show();
     }
-};
-
-// Mostrar mensaje de bienvenida
-const showWelcomeMessage = (user) => {
-    const prefix = user.gender === 'M' ? 'Bienvenido' : 'Bienvenida';
-    const title = user.gender === 'M' ? 'Sr.' : 'Sra.';
-    const message = `${prefix} a <span style="font-family: Georgia, serif; font-weight: bold;">mYpuB</span>, ${title} ${user.fullName}`;
-    alert(message);
-};
-
-// Manejo del cierre de sesión
-const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    showLoginForm();
-};
-
-// Funciones de navegación
-const showMainPanel = () => {
-    document.getElementById('registerForm').classList.add('hidden');
-    document.getElementById('loginForm').classList.add('hidden');
-    document.getElementById('mainPanel').classList.remove('hidden');
-    showSection('upload');
-};
-
-const showLoginForm = () => {
-    document.getElementById('registerForm').classList.add('hidden');
-    document.getElementById('loginForm').classList.remove('hidden');
-    document.getElementById('mainPanel').classList.add('hidden');
-};
-
-const showRegisterForm = () => {
-    document.getElementById('registerForm').classList.remove('hidden');
-    document.getElementById('loginForm').classList.add('hidden');
-    document.getElementById('mainPanel').classList.add('hidden');
-};
-
-const showSection = (sectionId) => {
-    document.querySelectorAll('.section-content').forEach(section => {
-        section.classList.remove('active');
+    
+    // Cargar lista de países
+    loadCountries();
+    
+    // Manejar el formulario de registro
+    const registerForm = document.getElementById('registerForm');
+    registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validar formulario
+        if (validateRegisterForm()) {
+            // Crear objeto de usuario
+            const user = {
+                fullName: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                gender: document.getElementById('gender').value,
+                country: document.getElementById('country').value,
+                phone: document.getElementById('phone').value,
+                password: document.getElementById('password').value,
+                isDeveloper: document.getElementById('password').value.startsWith('Mpteen'),
+                createdAt: new Date().toISOString(),
+                isActive: true
+            };
+            
+            // Registrar usuario en IndexedDB
+            registerUser(user)
+                .then(() => {
+                    // Iniciar sesión automáticamente
+                    loginUser(user.email, user.password)
+                        .then(user => {
+                            showMainPanel(user);
+                        })
+                        .catch(error => {
+                            showToast('Error', 'Error al iniciar sesión después del registro', true);
+                        });
+                })
+                .catch(error => {
+                    showToast('Error', 'Error al registrar el usuario: ' + error, true);
+                });
+        }
     });
-    document.getElementById(`${sectionId}Section`).classList.add('active');
-};
-
-// Manejo del panel de ayuda
-const toggleHelpPanel = () => {
-    document.getElementById('helpOptions').classList.toggle('hidden');
-};
-
-const showEmailHelpModal = () => {
-    const modal = new bootstrap.Modal(document.getElementById('emailHelpModal'));
-    modal.show();
-};
-
-const showWhatsappHelpModal = () => {
-    const modal = new bootstrap.Modal(document.getElementById('whatsappHelpModal'));
-    modal.show();
-};
-
-// Manejo de los formularios de ayuda
-const handleEmailHelp = (e) => {
-    e.preventDefault();
-    const name = document.getElementById('helpName').value;
-    const email = document.getElementById('helpEmail').value;
     
-    const mailtoLink = `mailto:enzemajr@gmail.com?subject=Ayuda%20mYpuB&body=Hola%20Sr.%20Desarrollador%20de%20mYpuB%2C%0A%0AEl%20usuario%20${encodeURIComponent(name)}%2C%20con%20el%20email%20${encodeURIComponent(email)}%2C%20solicita%20instrucciones%20para%20crear%20una%20cuenta%20de%20acceso%20a%20mYpuB%20y%20más%20cosas%20sobre%20la%20aplicación.%0A%0AGracias!`;
+    // Manejar el formulario de login
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        loginUser(email, password)
+            .then(user => {
+                if (!user.isActive) {
+                    showToast('Error', 'Tu cuenta ha sido desactivada por el administrador', true);
+                    return;
+                }
+                showMainPanel(user);
+            })
+            .catch(error => {
+                showToast('Error', 'Credenciales incorrectas o usuario no registrado', true);
+            });
+    });
     
-    window.location.href = mailtoLink;
-    bootstrap.Modal.getInstance(document.getElementById('emailHelpModal')).hide();
-};
-
-const handleWhatsappHelp = (e) => {
-    e.preventDefault();
-    const name = document.getElementById('whatsappName').value;
-    const number = document.getElementById('whatsappNumber').value;
+    // Manejar el botón de ayuda
+    const helpBtn = document.getElementById('helpBtn');
+    const helpPanel = document.getElementById('helpPanel');
+    const helpOverlay = document.getElementById('helpOverlay');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
     
-    const message = `Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el número ${number}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación. Gracias!`;
-    const whatsappLink = `https://wa.me/240222084663?text=${encodeURIComponent(message)}`;
+    helpBtn.addEventListener('click', function() {
+        helpPanel.style.display = 'block';
+        helpOverlay.style.display = 'block';
+    });
     
-    window.open(whatsappLink, '_blank');
-    bootstrap.Modal.getInstance(document.getElementById('whatsappHelpModal')).hide();
-};
-
-// Manejo de subida de medios
-const handleMediaUpload = async (e) => {
-    e.preventDefault();
-    const file = document.getElementById('mediaFile').files[0];
-    const isPublic = document.getElementById('public').checked;
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-    if (!file || !currentUser) {
-        alert('Por favor seleccione un archivo y asegúrese de haber iniciado sesión');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        const media = {
-            userId: currentUser.email,
-            data: event.target.result,
-            type: file.type,
-            isPublic: isPublic,
-            timestamp: new Date().toISOString(),
-            likes: 0,
-            dislikes: 0,
-            comments: []
-        };
-
-        try {
-            const transaction = db.transaction(['media'], 'readwrite');
-            const mediaStore = transaction.objectStore('media');
-            await mediaStore.add(media);
-            alert('Archivo subido exitosamente');
-            showSection('gallery');
-            loadGallery();
-        } catch (error) {
-            alert('Error al subir el archivo: ' + error.message);
-        }
-    };
-
-    reader.readAsDataURL(file);
-};
-
-// Funciones de la Galería
-const loadGallery = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) return;
-
-    try {
-        const transaction = db.transaction(['media'], 'readonly');
-        const mediaStore = transaction.objectStore('media');
-        const media = await mediaStore.getAll();
-
-        const galleryDiv = document.getElementById('mediaGallery');
-        galleryDiv.innerHTML = '';
-
-        media.forEach(item => {
-            if (item.isPublic || item.userId === currentUser.email) {
-                const card = createMediaCard(item);
-                galleryDiv.appendChild(card);
-            }
+    closeHelpBtn.addEventListener('click', function() {
+        helpPanel.style.display = 'none';
+        helpOverlay.style.display = 'none';
+    });
+    
+    helpOverlay.addEventListener('click', function() {
+        helpPanel.style.display = 'none';
+        helpOverlay.style.display = 'none';
+    });
+    
+    // Manejar el formulario de ayuda por email
+    const emailHelpForm = document.getElementById('emailHelpForm');
+    emailHelpForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('helpName').value;
+        const email = document.getElementById('helpEmail').value;
+        
+        // Abrir cliente de email
+        window.location.href = `mailto:enzemajr@gmail.com?subject=Consulta%20de%20ayuda%20de%20${encodeURIComponent(name)}&body=Por%20favor%20escriba%20su%20consulta%20aqu%C3%AD...`;
+        
+        // Cerrar panel de ayuda
+        helpPanel.style.display = 'none';
+        helpOverlay.style.display = 'none';
+        
+        // Limpiar formulario
+        emailHelpForm.reset();
+        
+        showToast('Éxito', 'Se ha abierto tu cliente de correo para enviar la consulta');
+    });
+    
+    // Manejar el formulario de ayuda por WhatsApp
+    const whatsappHelpForm = document.getElementById('whatsappHelpForm');
+    whatsappHelpForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('helpWhatsappName').value;
+        const number = document.getElementById('helpWhatsappNumber').value;
+        
+        // Abrir WhatsApp
+        window.open(`https://wa.me/+240222084663?text=Hola,%20soy%20${encodeURIComponent(name)}.%20Tengo%20una%20consulta%20sobre%20mYpuB...`, '_blank');
+        
+        // Cerrar panel de ayuda
+        helpPanel.style.display = 'none';
+        helpOverlay.style.display = 'none';
+        
+        // Limpiar formulario
+        whatsappHelpForm.reset();
+        
+        showToast('Éxito', 'Se ha abierto WhatsApp para enviar tu consulta');
+    });
+    
+    // Validar contraseña en tiempo real
+    const passwordInput = document.getElementById('password');
+    passwordInput.addEventListener('input', function() {
+        validatePassword(this.value);
+    });
+    
+    // Manejar cambio de país para actualizar prefijo telefónico
+    const countrySelect = document.getElementById('country');
+    countrySelect.addEventListener('change', function() {
+        updatePhonePrefix();
+    });
+    
+    // Manejar cierre de sesión
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            logoutUser();
         });
-    } catch (error) {
-        console.error('Error cargando la galería:', error);
     }
-};
-
-const createMediaCard = (media) => {
-    const card = document.createElement('div');
-    card.className = 'col-md-4 media-card';
     
-    const content = document.createElement('div');
-    content.className = 'card';
+    // Manejar selección de archivos
+    const fileInput = document.getElementById('fileInput');
+    const selectFilesBtn = document.getElementById('selectFilesBtn');
+    const uploadDropzone = document.getElementById('uploadDropzone');
     
-    const mediaElement = media.type.startsWith('image/') 
-        ? `<img src="${media.data}" class="card-img-top" alt="Contenido multimedia">`
-        : `<video src="${media.data}" controls class="card-img-top">Su navegador no soporta el elemento video.</video>`;
-
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const isOwner = currentUser && media.userId === currentUser.email;
-    const isDeveloper = currentUser && currentUser.isDeveloper;
-    const canDelete = isOwner || isDeveloper;
-
-    content.innerHTML = `
-        ${mediaElement}
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <small class="text-muted">Subido por: ${media.userId}</small>
-                <small class="text-muted">${new Date(media.timestamp).toLocaleString()}</small>
-            </div>
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-primary like-btn" ${media.userLiked ? 'disabled' : ''}>
-                        👍 <span class="like-count">${media.likes || 0}</span>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger dislike-btn" ${media.userDisliked ? 'disabled' : ''}>
-                        👎 <span class="dislike-count">${media.dislikes || 0}</span>
-                    </button>
+    selectFilesBtn.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+        handleFileSelection(this.files);
+    });
+    
+    // Manejar drag and drop
+    uploadDropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('active');
+    });
+    
+    uploadDropzone.addEventListener('dragleave', function() {
+        this.classList.remove('active');
+    });
+    
+    uploadDropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('active');
+        
+        if (e.dataTransfer.files.length > 0) {
+            handleFileSelection(e.dataTransfer.files);
+        }
+    });
+    
+    uploadDropzone.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // Manejar subida de archivos
+    const uploadFilesBtn = document.getElementById('uploadFilesBtn');
+    uploadFilesBtn.addEventListener('click', function() {
+        uploadSelectedFiles();
+    });
+    
+    // Manejar navegación entre módulos
+    const moduleLinks = document.querySelectorAll('[data-module]');
+    moduleLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchModule(this.dataset.module);
+        });
+    });
+    
+    // Manejar búsqueda en galería
+    const searchBtn = document.getElementById('searchBtn');
+    searchBtn.addEventListener('click', function() {
+        loadGalleryFiles();
+    });
+    
+    const gallerySearch = document.getElementById('gallerySearch');
+    gallerySearch.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            loadGalleryFiles();
+        }
+    });
+    
+    // Manejar like en archivo
+    const likeBtn = document.getElementById('likeBtn');
+    likeBtn.addEventListener('click', function() {
+        toggleLike(currentFileView.id);
+    });
+    
+    // Manejar descarga de archivo
+    const downloadBtn = document.getElementById('downloadBtn');
+    downloadBtn.addEventListener('click', function() {
+        downloadFile(currentFileView.id);
+    });
+    
+    // Manejar eliminación de archivo
+    const deleteBtn = document.getElementById('deleteBtn');
+    deleteBtn.addEventListener('click', function() {
+        showConfirmModal(
+            'Eliminar archivo',
+            '¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer.',
+            () => deleteFile(currentFileView.id)
+        );
+    });
+    
+    // Manejar compartir archivo
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.addEventListener('click', function() {
+        shareFile();
+    });
+    
+    // Manejar confirmación de acciones
+    const confirmActionBtn = document.getElementById('confirmActionBtn');
+    confirmActionBtn.addEventListener('click', function() {
+        if (currentAction && typeof currentAction === 'function') {
+            currentAction();
+        }
+        confirmModal.hide();
+    });
+    
+    // Función para cargar países desde la API
+    function loadCountries() {
+        fetch('https://restcountries.com/v3.1/all')
+            .then(response => response.json())
+            .then(data => {
+                const countrySelect = document.getElementById('country');
+                
+                // Limpiar opciones existentes
+                countrySelect.innerHTML = '';
+                
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Selecciona un país';
+                defaultOption.selected = true;
+                defaultOption.disabled = true;
+                countrySelect.appendChild(defaultOption);
+                
+                // Ordenar países alfabéticamente
+                data.sort((a, b) => {
+                    const nameA = a.name.common.toUpperCase();
+                    const nameB = b.name.common.toUpperCase();
+                    return nameA.localeCompare(nameB);
+                });
+                
+                // Agregar cada país al select
+                data.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.name.common;
+                    option.dataset.prefix = country.idd.root + (country.idd.suffixes ? country.idd.suffixes[0] : '');
+                    
+                    // Intentar obtener el emoji de la bandera (no todos los navegadores lo soportan)
+                    const flagEmoji = country.flag || '';
+                    
+                    option.textContent = `${flagEmoji} ${country.name.common} (${option.dataset.prefix})`;
+                    countrySelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar países:', error);
+                showToast('Error', 'No se pudieron cargar los países. Inténtalo más tarde.', true);
+                
+                // Agregar algunos países de ejemplo en caso de error
+                const countrySelect = document.getElementById('country');
+                countrySelect.innerHTML = '';
+                
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Error al cargar países';
+                defaultOption.selected = true;
+                defaultOption.disabled = true;
+                countrySelect.appendChild(defaultOption);
+                
+                const sampleCountries = [
+                    { name: 'España', prefix: '+34' },
+                    { name: 'México', prefix: '+52' },
+                    { name: 'Estados Unidos', prefix: '+1' },
+                    { name: 'Argentina', prefix: '+54' },
+                    { name: 'Colombia', prefix: '+57' }
+                ];
+                
+                sampleCountries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.name;
+                    option.dataset.prefix = country.prefix;
+                    option.textContent = `${country.name} (${country.prefix})`;
+                    countrySelect.appendChild(option);
+                });
+            });
+    }
+    
+    // Actualizar prefijo telefónico según país seleccionado
+    function updatePhonePrefix() {
+        const countrySelect = document.getElementById('country');
+        const selectedOption = countrySelect.options[countrySelect.selectedIndex];
+        const phonePrefix = document.querySelector('.input-group-text');
+        
+        if (selectedOption.dataset.prefix) {
+            phonePrefix.textContent = selectedOption.dataset.prefix;
+        } else {
+            phonePrefix.textContent = '+';
+        }
+    }
+    
+    // Validar formulario de registro
+    function validateRegisterForm() {
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const gender = document.getElementById('gender').value;
+        const country = document.getElementById('country').value;
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+        const termsCheck = document.getElementById('termsCheck').checked;
+        
+        // Validar nombre completo
+        if (!fullName || fullName.trim().length < 3) {
+            showToast('Error', 'Por favor ingresa un nombre completo válido', true);
+            return false;
+        }
+        
+        // Validar email (debe ser Gmail)
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        if (!emailRegex.test(email)) {
+            document.getElementById('email').classList.add('is-invalid');
+            showToast('Error', 'Por favor ingresa una dirección de Gmail válida', true);
+            return false;
+        } else {
+            document.getElementById('email').classList.remove('is-invalid');
+        }
+        
+        // Validar género
+        if (!gender) {
+            showToast('Error', 'Por favor selecciona tu género', true);
+            return false;
+        }
+        
+        // Validar país
+        if (!country) {
+            showToast('Error', 'Por favor selecciona tu país', true);
+            return false;
+        }
+        
+        // Validar teléfono
+        const phoneRegex = /^\d{6,15}$/; // Solo números, entre 6 y 15 dígitos
+        if (!phoneRegex.test(phone)) {
+            showToast('Error', 'Por favor ingresa un número de teléfono válido (solo números)', true);
+            return false;
+        }
+        
+        // Validar contraseña
+        if (!validatePassword(password, true)) {
+            return false;
+        }
+        
+        // Validar términos y condiciones
+        if (!termsCheck) {
+            showToast('Error', 'Debes aceptar los términos y condiciones', true);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Validar contraseña
+    function validatePassword(password, showError = false) {
+        const passwordStrength = document.getElementById('passwordStrength');
+        const passwordInput = document.getElementById('password');
+        
+        // Expresión regular para contraseña normal
+        const normalPasswordRegex = /^(?=.*[A-Z])(?=.*[a-z]{5})(?=.*\d{4})(?=.*[@#&]{2}).{12}$/;
+        // Expresión regular para desarrolladores
+        const devPasswordRegex = /^Mpteen(?=.*\d{4})(?=.*[@#&]{2}).{12}$/;
+        
+        let isValid = false;
+        let isDev = false;
+        let strength = 0;
+        
+        // Verificar si es contraseña de desarrollador
+        if (password.startsWith('Mpteen')) {
+            isDev = devPasswordRegex.test(password);
+            isValid = isDev;
+        } else {
+            isValid = normalPasswordRegex.test(password);
+        }
+        
+        // Calcular fortaleza de la contraseña (simplificado)
+        if (password.length >= 12) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[@#&]/.test(password)) strength++;
+        
+        // Actualizar barra de fortaleza
+        passwordStrength.className = `password-strength strength-${strength}`;
+        
+        // Mostrar error si se solicita
+        if (showError && !isValid) {
+            passwordInput.classList.add('is-invalid');
+            showToast('Error', 'La contraseña no cumple con los requisitos', true);
+            return false;
+        } else if (isValid) {
+            passwordInput.classList.remove('is-invalid');
+        }
+        
+        return isValid;
+    }
+    
+    // Mostrar panel principal
+    function showMainPanel(user) {
+        currentUser = user;
+        
+        document.getElementById('authPanel').style.display = 'none';
+        document.getElementById('mainPanel').style.display = 'block';
+        
+        // Mostrar mensaje de bienvenida
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const saludo = user.gender === 'male' ? 'Sr.' : 'Sra.';
+        welcomeMessage.textContent = `Bienvenid${user.gender === 'male' ? 'o' : 'a'} a mYpuB ${saludo} ${user.fullName}`;
+        
+        // Mostrar avatar de usuario
+        const userAvatar = document.getElementById('userAvatar');
+        const initials = user.fullName.split(' ').map(name => name[0]).join('').toUpperCase();
+        userAvatar.textContent = initials.substring(0, 2);
+        
+        // Mostrar módulo de usuarios si es desarrollador
+        if (user.isDeveloper) {
+            document.getElementById('usersModuleLink').style.display = 'block';
+        }
+        
+        // Cargar módulo inicial
+        switchModule('upload');
+        
+        // Mostrar toast de bienvenida
+        showToast('Bienvenido', `Has iniciado sesión correctamente como ${user.email}`);
+    }
+    
+    // Cerrar sesión
+    function logoutUser() {
+        currentUser = null;
+        document.getElementById('mainPanel').style.display = 'none';
+        document.getElementById('authPanel').style.display = 'block';
+        
+        // Limpiar formularios
+        document.getElementById('loginForm').reset();
+        document.getElementById('registerForm').reset();
+        
+        showToast('Sesión cerrada', 'Has cerrado sesión correctamente');
+    }
+    
+    // Cambiar entre módulos
+    function switchModule(moduleName) {
+        // Desactivar todas las pestañas y enlaces
+        document.querySelectorAll('.module-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        document.querySelectorAll('[data-module]').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // Activar la pestaña seleccionada
+        document.getElementById(`${moduleName}Module`).classList.add('active');
+        
+        // Activar el enlace seleccionado
+        document.querySelector(`[data-module="${moduleName}"]`).classList.add('active');
+        
+        // Cargar contenido según el módulo
+        switch (moduleName) {
+            case 'upload':
+                // Resetear selección de archivos
+                selectedFiles = [];
+                fileInput.value = '';
+                uploadFilesBtn.disabled = true;
+                document.getElementById('uploadStatus').textContent = '';
+                document.getElementById('uploadProgress').style.display = 'none';
+                break;
+                
+            case 'gallery':
+                loadGalleryFiles();
+                break;
+                
+            case 'share':
+                loadUsersForSharing();
+                loadUserFilesForSharing();
+                loadSharedFiles();
+                break;
+                
+            case 'users':
+                if (currentUser.isDeveloper) {
+                    loadUsersForManagement();
+                }
+                break;
+                
+            case 'info':
+                // No necesita carga adicional
+                break;
+        }
+    }
+    
+    // Manejar selección de archivos
+    function handleFileSelection(files) {
+        selectedFiles = Array.from(files);
+        
+        // Validar tipos de archivo
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/avi', 'video/quicktime'];
+        const invalidFiles = selectedFiles.filter(file => !validTypes.includes(file.type));
+        
+        if (invalidFiles.length > 0) {
+            showToast('Error', `Algunos archivos no son válidos: ${invalidFiles.map(f => f.name).join(', ')}`, true);
+            selectedFiles = selectedFiles.filter(file => validTypes.includes(file.type));
+        }
+        
+        if (selectedFiles.length > 0) {
+            uploadFilesBtn.disabled = false;
+            document.getElementById('uploadStatus').textContent = `Seleccionados ${selectedFiles.length} archivo(s)`;
+        } else {
+            uploadFilesBtn.disabled = true;
+            document.getElementById('uploadStatus').textContent = 'No hay archivos seleccionados';
+        }
+    }
+    
+    // Subir archivos seleccionados
+    function uploadSelectedFiles() {
+        if (selectedFiles.length === 0) return;
+        
+        const visibility = document.getElementById('fileVisibility').value;
+        const description = document.getElementById('fileDescription').value;
+        
+        const progressBar = document.getElementById('uploadProgress').querySelector('.progress-bar');
+        document.getElementById('uploadProgress').style.display = 'block';
+        progressBar.style.width = '0%';
+        
+        let uploadCount = 0;
+        
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const fileData = {
+                    name: file.name,
+                    type: file.type.startsWith('image') ? 'image' : 'video',
+                    size: file.size,
+                    data: e.target.result.split(',')[1], // Solo la parte base64
+                    visibility: visibility,
+                    description: description,
+                    userEmail: currentUser.email,
+                    userName: currentUser.fullName,
+                    uploadDate: new Date().toISOString(),
+                    likes: [],
+                    downloads: 0,
+                    sharedWith: []
+                };
+                
+                saveFile(fileData)
+                    .then(() => {
+                        uploadCount++;
+                        const progress = Math.round((uploadCount / selectedFiles.length) * 100);
+                        progressBar.style.width = `${progress}%`;
+                        
+                        if (uploadCount === selectedFiles.length) {
+                            document.getElementById('uploadStatus').textContent = 'Todos los archivos se han subido correctamente';
+                            uploadFilesBtn.disabled = true;
+                            selectedFiles = [];
+                            fileInput.value = '';
+                            
+                            // Recargar la galería si está activa
+                            if (document.getElementById('galleryModule').classList.contains('active')) {
+                                loadGalleryFiles();
+                            }
+                            
+                            showToast('Éxito', 'Archivos subidos correctamente');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al subir archivo:', error);
+                        showToast('Error', `Error al subir ${file.name}`, true);
+                    });
+            };
+            
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    // Cargar archivos para la galería
+    function loadGalleryFiles() {
+        const searchTerm = document.getElementById('gallerySearch').value.toLowerCase();
+        const galleryFiles = document.getElementById('galleryFiles');
+        
+        galleryFiles.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
                 </div>
-                <div class="btn-group">
-                    ${media.isPublic ? `
-                        <button class="btn btn-sm btn-success download-btn">Descargar</button>
-                    ` : ''}
-                    ${canDelete ? `
-                        <button class="btn btn-sm btn-danger delete-btn">Eliminar</button>
-                    ` : ''}
-                </div>
+                <p class="mt-2">Cargando galería...</p>
             </div>
-            <div class="mt-3">
-                <div class="comments-section">
-                    ${media.comments ? media.comments.map(comment => `
-                        <div class="comment mb-2">
-                            <small class="fw-bold">${comment.userId}:</small>
-                            <span>${comment.text}</span>
+        `;
+        
+        getAllFiles()
+            .then(files => {
+                // Filtrar según búsqueda
+                if (searchTerm) {
+                    files = files.filter(file => 
+                        file.name.toLowerCase().includes(searchTerm) || 
+                        file.description?.toLowerCase().includes(searchTerm) ||
+                        file.userName.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                // Ordenar por fecha más reciente
+                files.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+                
+                if (files.length === 0) {
+                    galleryFiles.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-folder-x display-4 text-muted"></i>
+                            <p class="mt-3">No se encontraron archivos</p>
                         </div>
-                    `).join('') : ''}
-                </div>
-                <div class="input-group mt-2">
-                    <input type="text" class="form-control form-control-sm comment-input" placeholder="Añadir comentario">
-                    <button class="btn btn-sm btn-outline-primary add-comment-btn">Comentar</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Event Listeners para los botones
-    const likeBtn = content.querySelector('.like-btn');
-    const dislikeBtn = content.querySelector('.dislike-btn');
-    const downloadBtn = content.querySelector('.download-btn');
-    const deleteBtn = content.querySelector('.delete-btn');
-    const commentInput = content.querySelector('.comment-input');
-    const addCommentBtn = content.querySelector('.add-comment-btn');
-
-    likeBtn?.addEventListener('click', () => handleLike(media.id));
-    dislikeBtn?.addEventListener('click', () => handleDislike(media.id));
-    downloadBtn?.addEventListener('click', () => handleDownload(media));
-    deleteBtn?.addEventListener('click', () => handleDelete(media.id));
-    addCommentBtn?.addEventListener('click', () => {
-        const comment = commentInput.value.trim();
-        if (comment) {
-            handleAddComment(media.id, comment);
-            commentInput.value = '';
-        }
-    });
-
-    card.appendChild(content);
-    return card;
-};
-
-// Funciones de interacción con los medios
-const handleLike = async (mediaId) => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) return;
-
-    try {
-        const transaction = db.transaction(['media'], 'readwrite');
-        const mediaStore = transaction.objectStore('media');
-        const media = await mediaStore.get(mediaId);
-
-        if (!media.likes) media.likes = 0;
-        if (!media.userLikes) media.userLikes = [];
-
-        if (!media.userLikes.includes(currentUser.email)) {
-            media.likes++;
-            media.userLikes.push(currentUser.email);
-            await mediaStore.put(media);
-            loadGallery();
-        }
-    } catch (error) {
-        console.error('Error al dar like:', error);
+                    `;
+                    return;
+                }
+                
+                galleryFiles.innerHTML = '';
+                
+                files.forEach(file => {
+                    // Solo mostrar archivos públicos o del usuario actual
+                    if (file.visibility === 'public' || file.userEmail === currentUser.email) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4 col-sm-6';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'card file-card h-100';
+                        
+                        let thumbnailContent = '';
+                        if (file.type === 'image') {
+                            thumbnailContent = `<img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">`;
+                        } else {
+                            thumbnailContent = `
+                                <div class="video-thumbnail">
+                                    <img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">
+                                    <i class="bi bi-play-circle video-play-icon"></i>
+                                </div>
+                            `;
+                        }
+                        
+                        const isLiked = file.likes.includes(currentUser.email);
+                        const isOwner = file.userEmail === currentUser.email;
+                        
+                        card.innerHTML = `
+                            ${thumbnailContent}
+                            <div class="card-body">
+                                <h6 class="card-title">${file.name}</h6>
+                                <p class="card-text small text-muted">Subido por: ${file.userName}</p>
+                                <p class="card-text small text-muted">${new Date(file.uploadDate).toLocaleString()}</p>
+                                <div class="file-actions">
+                                    <div>
+                                        <button class="btn btn-sm ${isLiked ? 'btn-primary' : 'btn-outline-primary'} like-btn" data-file-id="${file.id}">
+                                            <i class="bi bi-hand-thumbs-up"></i> ${file.likes.length}
+                                        </button>
+                                        ${file.visibility === 'public' ? `
+                                            <button class="btn btn-sm btn-outline-success download-btn ms-2" data-file-id="${file.id}">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary view-btn" data-file-id="${file.id}">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                ${isOwner ? `
+                                    <div class="mt-2 text-end">
+                                        <button class="btn btn-sm btn-outline-danger delete-btn" data-file-id="${file.id}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                        
+                        col.appendChild(card);
+                        galleryFiles.appendChild(col);
+                    }
+                });
+                
+                // Agregar event listeners a los botones
+                document.querySelectorAll('.like-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        toggleLike(this.dataset.fileId);
+                    });
+                });
+                
+                document.querySelectorAll('.download-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        downloadFile(this.dataset.fileId);
+                    });
+                });
+                
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        viewFile(this.dataset.fileId);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        showConfirmModal(
+                            'Eliminar archivo',
+                            '¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer.',
+                            () => deleteFile(this.dataset.fileId)
+                        );
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar archivos:', error);
+                galleryFiles.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
+                        <p class="mt-3">Error al cargar la galería</p>
+                    </div>
+                `;
+            });
     }
-};
-
-const handleDislike = async (mediaId) => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) return;
-
-    try {
-        const transaction = db.transaction(['media'], 'readwrite');
-        const mediaStore = transaction.objectStore('media');
-        const media = await mediaStore.get(mediaId);
-
-        if (!media.dislikes) media.dislikes = 0;
-        if (!media.userDislikes) media.userDislikes = [];
-
-        if (!media.userDislikes.includes(currentUser.email)) {
-            media.dislikes++;
-            media.userDislikes.push(currentUser.email);
-            await mediaStore.put(media);
-            loadGallery();
-        }
-    } catch (error) {
-        console.error('Error al dar dislike:', error);
-    }
-};
-
-const handleDownload = (media) => {
-    const link = document.createElement('a');
-    link.href = media.data;
-    link.download = `mypub_media_${media.id}${media.type.startsWith('image/') ? '.jpg' : '.mp4'}`;
-    link.click();
-};
-
-const handleDelete = async (mediaId) => {
-    if (!confirm('¿Está seguro de que desea eliminar este contenido?')) return;
-
-    try {
-        const transaction = db.transaction(['media'], 'readwrite');
-        const mediaStore = transaction.objectStore('media');
-        await mediaStore.delete(mediaId);
-        loadGallery();
-    } catch (error) {
-        console.error('Error al eliminar el contenido:', error);
-    }
-};
-
-const handleAddComment = async (mediaId, commentText) => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) return;
-
-    try {
-        const transaction = db.transaction(['media'], 'readwrite');
-        const mediaStore = transaction.objectStore('media');
-        const media = await mediaStore.get(mediaId);
-
-        if (!media.comments) media.comments = [];
-        
-        media.comments.push({
-            userId: currentUser.email,
-            text: commentText,
-            timestamp: new Date().toISOString()
-        });
-
-        await mediaStore.put(media);
-        loadGallery();
-    } catch (error) {
-        console.error('Error al añadir comentario:', error);
-    }
-};
-
-// Funciones de Gestión de Usuarios (solo para desarrolladores)
-const loadUserManagement = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser || !currentUser.isDeveloper) {
-        alert('Acceso no autorizado');
-        return;
-    }
-
-    try {
-        const transaction = db.transaction(['users'], 'readonly');
-        const userStore = transaction.objectStore('users');
-        const users = await userStore.getAll();
-
-        const usersList = document.getElementById('usersList');
-        usersList.innerHTML = '';
-
-        users.forEach(user => {
-            const userCard = createUserCard(user);
-            usersList.appendChild(userCard);
-        });
-    } catch (error) {
-        console.error('Error cargando usuarios:', error);
-    }
-};
-
-const createUserCard = (user) => {
-    const card = document.createElement('div');
-    card.className = 'card mb-3';
-    card.innerHTML = `
-        <div class="card-body">
-            <h5 class="card-title">${user.fullName}</h5>
-            <p class="card-text">
-                Email: ${user.email}<br>
-                Teléfono: ${user.phone}<br>
-                País: ${user.country}<br>
-                Estado: ${user.blocked ? 'Bloqueado' : 'Activo'}
-            </p>
-            <button class="btn btn-warning btn-sm me-2" onclick="toggleUserBlock('${user.email}')">
-                ${user.blocked ? 'Desbloquear' : 'Bloquear'}
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.email}')">
-                Eliminar
-            </button>
-        </div>
-    `;
-    return card;
-};
-
-const toggleUserBlock = async (email) => {
-    try {
-        const transaction = db.transaction(['users'], 'readwrite');
-        const userStore = transaction.objectStore('users');
-        const user = await userStore.get(email);
-        
-        user.blocked = !user.blocked;
-        await userStore.put(user);
-        loadUserManagement();
-    } catch (error) {
-        console.error('Error al cambiar estado del usuario:', error);
-    }
-};
-
-const deleteUser = async (email) => {
-    if (!confirm('¿Está seguro de que desea eliminar este usuario?')) return;
-
-    try {
-        const transaction = db.transaction(['users'], 'readwrite');
-        const userStore = transaction.objectStore('users');
-        await userStore.delete(email);
-        loadUserManagement();
-    } catch (error) {
-        console.error('Error al eliminar usuario:', error);
-    }
-};
-
-// Funciones para compartir archivos
-const loadShareSection = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser) return;
-
-    try {
-        // Cargar usuarios para compartir
-        const userTransaction = db.transaction(['users'], 'readonly');
-        const userStore = userTransaction.objectStore('users');
-        const users = await userStore.getAll();
-
-        // Cargar medios del usuario actual
-        const mediaTransaction = db.transaction(['media'], 'readonly');
-        const mediaStore = mediaTransaction.objectStore('media');
-        const allMedia = await mediaStore.getAll();
-
-        const userSelect = document.getElementById('userSelect');
-        const mediaSelect = document.getElementById('mediaSelect');
-
-        // Limpiar selects
-        userSelect.innerHTML = '<option value="">Seleccione un usuario...</option>';
-        mediaSelect.innerHTML = '<option value="">Seleccione un archivo...</option>';
-
-        // Poblar select de usuarios
-        users.forEach(user => {
-            if (user.email !== currentUser.email && !user.blocked) {
-                const option = document.createElement('option');
-                option.value = user.email;
-                option.textContent = `${user.fullName} (${user.email})`;
-                userSelect.appendChild(option);
-            }
-        });
-
-        // Poblar select de medios
-        const userMedia = allMedia.filter(media => media.userId === currentUser.email);
-        userMedia.forEach(media => {
-            const option = document.createElement('option');
-            option.value = media.id;
-            option.textContent = `${media.type.split('/')[0]} - ${new Date(media.timestamp).toLocaleString()}`;
-            mediaSelect.appendChild(option);
-        });
-
-        // Configurar botón de compartir
-        const shareBtn = document.getElementById('shareBtn');
-        shareBtn.onclick = handleShare;
-    } catch (error) {
-        console.error('Error cargando sección de compartir:', error);
-    }
-};
-
-const handleShare = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    const selectedUser = document.getElementById('userSelect').value;
-    const selectedMediaId = parseInt(document.getElementById('mediaSelect').value);
-
-    if (!selectedUser || !selectedMediaId) {
-        alert('Por favor seleccione un usuario y un archivo para compartir');
-        return;
-    }
-
-    try {
-        const transaction = db.transaction(['media'], 'readwrite');
-        const mediaStore = transaction.objectStore('media');
-        const mediaToShare = await mediaStore.get(selectedMediaId);
-
-        const sharedMedia = {
-            ...mediaToShare,
-            id: undefined, // Permitir que autoIncrement genere un nuevo ID
-            originalId: selectedMediaId,
-            userId: selectedUser,
-            sharedBy: currentUser.email,
-            timestamp: new Date().toISOString(),
-            isPublic: false // Por defecto compartir como privado
-        };
-
-        await mediaStore.add(sharedMedia);
-        alert('Archivo compartido exitosamente');
-        
-        // Recargar la sección de compartir
-        loadShareSection();
-    } catch (error) {
-        console.error('Error al compartir archivo:', error);
-        alert('Error al compartir el archivo');
-    }
-};
-
-// Funciones de utilidad para el manejo de archivos
-const getFileExtension = (mimeType) => {
-    const extensions = {
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'image/gif': '.gif',
-        'video/mp4': '.mp4',
-        'video/webm': '.webm',
-        'video/ogg': '.ogv'
-    };
-    return extensions[mimeType] || '';
-};
-
-const formatFileSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-// Funciones para la validación de archivos
-const validateFile = (file) => {
-    // Tamaño máximo permitido (50MB)
-    const MAX_FILE_SIZE = 50 * 1024 * 1024;
     
-    // Tipos MIME permitidos
-    const ALLOWED_TYPES = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'video/mp4',
-        'video/webm',
-        'video/ogg'
-    ];
-
-    if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`El archivo es demasiado grande. Tamaño máximo permitido: ${formatFileSize(MAX_FILE_SIZE)}`);
+    // Ver archivo en modal
+    function viewFile(fileId) {
+        getFileById(fileId)
+            .then(file => {
+                currentFileView = file;
+                
+                const modalTitle = document.getElementById('fileModalTitle');
+                const modalContent = document.getElementById('fileModalContent');
+                const likesCount = document.getElementById('fileLikesCount');
+                const fileOwner = document.getElementById('fileOwner');
+                const fileDate = document.getElementById('fileDate');
+                const deleteBtn = document.getElementById('deleteBtn');
+                
+                modalTitle.textContent = file.name;
+                
+                if (file.type === 'image') {
+                    modalContent.innerHTML = `<img src="data:image/jpeg;base64,${file.data}" class="img-fluid" alt="${file.name}">`;
+                } else {
+                    modalContent.innerHTML = `
+                        <video controls class="w-100">
+                            <source src="data:video/mp4;base64,${file.data}" type="video/mp4">
+                            Tu navegador no soporta el elemento de video.
+                        </video>
+                    `;
+                }
+                
+                likesCount.textContent = file.likes.length;
+                fileOwner.textContent = `Por: ${file.userName}`;
+                fileDate.textContent = new Date(file.uploadDate).toLocaleString();
+                
+                // Mostrar botón de eliminar solo para el propietario o desarrollador
+                deleteBtn.style.display = (file.userEmail === currentUser.email || currentUser.isDeveloper) ? 'block' : 'none';
+                
+                // Configurar botón de like
+                const isLiked = file.likes.includes(currentUser.email);
+                likeBtn.className = isLiked ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
+                
+                // Mostrar botón de descarga solo si es público o el usuario es el propietario
+                downloadBtn.style.display = (file.visibility === 'public' || file.userEmail === currentUser.email) ? 'block' : 'none';
+                
+                fileModal.show();
+            })
+            .catch(error => {
+                console.error('Error al cargar archivo:', error);
+                showToast('Error', 'No se pudo cargar el archivo', true);
+            });
     }
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-        throw new Error('Tipo de archivo no permitido. Solo se permiten imágenes (JPG, PNG, GIF) y videos (MP4, WebM, OGG)');
-    }
-
-    return true;
-};
-
-// Sistema de notificaciones
-const notifyUser = async (userId, message, type = 'info') => {
-    try {
-        const transaction = db.transaction(['notifications'], 'readwrite');
-        const notificationStore = transaction.objectStore('notifications');
-        
-        const notification = {
-            userId,
-            message,
-            type,
-            timestamp: new Date().toISOString(),
-            read: false
-        };
-
-        await notificationStore.add(notification);
-        updateNotificationBadge(userId);
-    } catch (error) {
-        console.error('Error al crear notificación:', error);
-    }
-};
-
-const updateNotificationBadge = async (userId) => {
-    try {
-        const transaction = db.transaction(['notifications'], 'readonly');
-        const notificationStore = transaction.objectStore('notifications');
-        const notifications = await notificationStore.index('userId').getAll(userId);
-        
-        const unreadCount = notifications.filter(n => !n.read).length;
-        const badge = document.getElementById('notificationBadge');
-        
-        if (badge) {
-            badge.textContent = unreadCount;
-            badge.style.display = unreadCount > 0 ? 'block' : 'none';
-        }
-    } catch (error) {
-        console.error('Error al actualizar badge de notificaciones:', error);
-    }
-};
-
-// Función para actualizar la interfaz cuando cambia el estado de la aplicación
-const updateUI = () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
     
-    // Actualizar elementos de la interfaz según el rol del usuario
-    if (currentUser) {
-        // Mostrar/ocultar elementos según si es desarrollador
-        const devOnlyElements = document.querySelectorAll('.dev-only');
-        devOnlyElements.forEach(element => {
-            element.style.display = currentUser.isDeveloper ? 'block' : 'none';
-        });
-
-        // Actualizar nombre de usuario en la barra de navegación
-        const userNameElement = document.getElementById('currentUserName');
-        if (userNameElement) {
-            userNameElement.textContent = currentUser.fullName;
+    // Alternar like en un archivo
+    function toggleLike(fileId) {
+        getFileById(fileId)
+            .then(file => {
+                const likes = [...file.likes];
+                const userIndex = likes.indexOf(currentUser.email);
+                
+                if (userIndex === -1) {
+                    likes.push(currentUser.email);
+                } else {
+                    likes.splice(userIndex, 1);
+                }
+                
+                return updateFile(fileId, { likes });
+            })
+            .then(() => {
+                // Actualizar vista si el modal está abierto
+                if (currentFileView && currentFileView.id === fileId) {
+                    viewFile(fileId);
+                }
+                
+                // Recargar la galería si está activa
+                if (document.getElementById('galleryModule').classList.contains('active')) {
+                    loadGalleryFiles();
+                }
+            })
+            .catch(error => {
+                console.error('Error al actualizar like:', error);
+                showToast('Error', 'No se pudo actualizar el like', true);
+            });
+    }
+    
+    // Descargar archivo
+    function downloadFile(fileId) {
+        getFileById(fileId)
+            .then(file => {
+                // Incrementar contador de descargas
+                return updateFile(fileId, { downloads: file.downloads + 1 });
+            })
+            .then(file => {
+                const link = document.createElement('a');
+                link.href = `data:${file.type === 'image' ? 'image/jpeg' : 'video/mp4'};base64,${file.data}`;
+                link.download = file.name;
+                link.click();
+                
+                showToast('Éxito', 'Descarga iniciada');
+            })
+            .catch(error => {
+                console.error('Error al descargar archivo:', error);
+                showToast('Error', 'No se pudo descargar el archivo', true);
+            });
+    }
+    
+    // Eliminar archivo
+    function deleteFile(fileId) {
+        deleteFileFromDB(fileId)
+            .then(() => {
+                showToast('Éxito', 'Archivo eliminado correctamente');
+                fileModal.hide();
+                
+                // Recargar la galería si está activa
+                if (document.getElementById('galleryModule').classList.contains('active')) {
+                    loadGalleryFiles();
+                }
+            })
+            .catch(error => {
+                console.error('Error al eliminar archivo:', error);
+                showToast('Error', 'No se pudo eliminar el archivo', true);
+            });
+    }
+    
+    // Cargar usuarios para compartir
+    function loadUsersForSharing() {
+        const shareUserSelect = document.getElementById('shareUser');
+        
+        shareUserSelect.innerHTML = `
+            <option value="" selected disabled>Cargando usuarios...</option>
+        `;
+        
+        getAllUsers()
+            .then(users => {
+                // Filtrar usuarios (excluyendo al usuario actual y usuarios desactivados)
+                users = users.filter(user => 
+                    user.email !== currentUser.email && 
+                    user.isActive &&
+                    (!currentUser.isDeveloper || user.isDeveloper !== true) // Desarrolladores no pueden compartir con otros desarrolladores
+                );
+                
+                if (users.length === 0) {
+                    shareUserSelect.innerHTML = `
+                        <option value="" selected disabled>No hay usuarios disponibles</option>
+                    `;
+                    return;
+                }
+                
+                shareUserSelect.innerHTML = `
+                    <option value="" selected disabled>Selecciona un usuario</option>
+                    ${users.map(user => `
+                        <option value="${user.email}">${user.fullName} (${user.email})</option>
+                    `).join('')}
+                `;
+            })
+            .catch(error => {
+                console.error('Error al cargar usuarios:', error);
+                shareUserSelect.innerHTML = `
+                    <option value="" selected disabled>Error al cargar usuarios</option>
+                `;
+            });
+    }
+    
+    // Cargar archivos del usuario para compartir
+    function loadUserFilesForSharing() {
+        const shareFileSelect = document.getElementById('shareFile');
+        
+        shareFileSelect.innerHTML = `
+            <option value="" selected disabled>Cargando tus archivos...</option>
+        `;
+        
+        getUserFiles(currentUser.email)
+            .then(files => {
+                if (files.length === 0) {
+                    shareFileSelect.innerHTML = `
+                        <option value="" selected disabled>No tienes archivos para compartir</option>
+                    `;
+                    return;
+                }
+                
+                shareFileSelect.innerHTML = `
+                    <option value="" selected disabled>Selecciona un archivo</option>
+                    ${files.map(file => `
+                        <option value="${file.id}">${file.name} (${new Date(file.uploadDate).toLocaleDateString()})</option>
+                    `).join('')}
+                `;
+                
+                // Habilitar botón de compartir si hay archivos
+                document.getElementById('shareBtn').disabled = files.length === 0;
+            })
+            .catch(error => {
+                console.error('Error al cargar archivos:', error);
+                shareFileSelect.innerHTML = `
+                    <option value="" selected disabled>Error al cargar archivos</option>
+                `;
+            });
+    }
+    
+    // Compartir archivo con otro usuario
+    function shareFile() {
+        const shareUser = document.getElementById('shareUser').value;
+        const shareFile = document.getElementById('shareFile').value;
+        const shareMessage = document.getElementById('shareMessage').value;
+        
+        if (!shareUser || !shareFile) {
+            showToast('Error', 'Debes seleccionar un usuario y un archivo', true);
+            return;
         }
-
-        // Actualizar badge de notificaciones
-        updateNotificationBadge(currentUser.email);
+        
+        getFileById(shareFile)
+            .then(file => {
+                // Verificar que el archivo no esté ya compartido con este usuario
+                if (file.sharedWith.includes(shareUser)) {
+                    throw new Error('Este archivo ya ha sido compartido con el usuario seleccionado');
+                }
+                
+                // Agregar usuario a la lista de compartidos
+                const sharedWith = [...file.sharedWith, shareUser];
+                return updateFile(file.id, { sharedWith });
+            })
+            .then(() => {
+                showToast('Éxito', 'Archivo compartido correctamente');
+                
+                // Limpiar formulario
+                document.getElementById('shareMessage').value = '';
+                
+                // Recargar archivos compartidos
+                loadSharedFiles();
+            })
+            .catch(error => {
+                console.error('Error al compartir archivo:', error);
+                showToast('Error', error.message || 'No se pudo compartir el archivo', true);
+            });
     }
-};
-
-// Event Listeners adicionales
-document.addEventListener('DOMContentLoaded', () => {
-    // Actualizar UI cuando se carga la página
-    updateUI();
-
-    // Manejar cambios en el tema (claro/oscuro)
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-theme');
-            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+    
+    // Cargar archivos compartidos con el usuario actual
+    function loadSharedFiles() {
+        const sharedFilesTable = document.querySelector('#sharedFilesTable tbody');
+        
+        sharedFilesTable.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        getAllFiles()
+            .then(files => {
+                // Filtrar archivos compartidos con el usuario actual
+                const sharedFiles = files.filter(file => 
+                    file.sharedWith.includes(currentUser.email)
+                );
+                
+                if (sharedFiles.length === 0) {
+                    sharedFilesTable.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="bi bi-folder-x display-6 text-muted"></i>
+                                <p class="mt-2">No tienes archivos compartidos</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                sharedFilesTable.innerHTML = '';
+                
+                sharedFiles.forEach(file => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${file.name}</td>
+                        <td>${file.userName}</td>
+                        <td>${new Date(file.uploadDate).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary view-shared-btn" data-file-id="${file.id}">
+                                <i class="bi bi-eye"></i> Ver
+                            </button>
+                        </td>
+                    `;
+                    
+                    sharedFilesTable.appendChild(row);
+                });
+                
+                // Agregar event listeners a los botones
+                document.querySelectorAll('.view-shared-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        viewFile(this.dataset.fileId);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar archivos compartidos:', error);
+                sharedFilesTable.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-4">
+                            <i class="bi bi-exclamation-triangle display-6 text-danger"></i>
+                            <p class="mt-2">Error al cargar archivos compartidos</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Cargar usuarios para gestión (solo desarrollador)
+    function loadUsersForManagement() {
+        const usersTable = document.querySelector('#usersTable tbody');
+        
+        usersTable.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        getAllUsers()
+            .then(users => {
+                // Ordenar usuarios por fecha de creación
+                users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                if (users.length === 0) {
+                    usersTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="bi bi-people display-6 text-muted"></i>
+                                <p class="mt-2">No hay usuarios registrados</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                usersTable.innerHTML = '';
+                
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${user.fullName}</td>
+                        <td>${user.email}</td>
+                        <td>${user.country}</td>
+                        <td>${user.phone}</td>
+                        <td>
+                            <span class="badge ${user.isActive ? 'bg-success' : 'bg-danger'}">
+                                ${user.isActive ? 'Activo' : 'Inactivo'}
+                            </span>
+                            ${user.isDeveloper ? '<span class="badge bg-primary ms-1">Desarrollador</span>' : ''}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary edit-user-btn" data-user-email="${user.email}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn ${user.isActive ? 'btn-outline-danger' : 'btn-outline-success'} toggle-user-btn" data-user-email="${user.email}">
+                                    <i class="bi ${user.isActive ? 'bi-lock' : 'bi-unlock'}"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    usersTable.appendChild(row);
+                });
+                
+                // Agregar event listeners a los botones
+                document.querySelectorAll('.edit-user-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        editUser(this.dataset.userEmail);
+                    });
+                });
+                
+                document.querySelectorAll('.toggle-user-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        toggleUserStatus(this.dataset.userEmail);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error al cargar usuarios:', error);
+                usersTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <i class="bi bi-exclamation-triangle display-6 text-danger"></i>
+                            <p class="mt-2">Error al cargar usuarios</p>
+                        </td>
+                    </tr>
+                `;
+            });
+    }
+    
+    // Editar usuario (solo desarrollador)
+    function editUser(userEmail) {
+        showToast('Información', 'La edición de usuarios está en desarrollo', false);
+    }
+    
+    // Alternar estado de usuario (activo/inactivo)
+    function toggleUserStatus(userEmail) {
+        getUserByEmail(userEmail)
+            .then(user => {
+                return updateUser(userEmail, { isActive: !user.isActive });
+            })
+            .then(() => {
+                showToast('Éxito', 'Estado de usuario actualizado');
+                loadUsersForManagement();
+            })
+            .catch(error => {
+                console.error('Error al actualizar usuario:', error);
+                showToast('Error', 'No se pudo actualizar el usuario', true);
+            });
+    }
+    
+    // Mostrar modal de confirmación
+    function showConfirmModal(title, message, action) {
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalBody').textContent = message;
+        currentAction = action;
+        confirmModal.show();
+    }
+    
+    // Inicializar IndexedDB
+    let db;
+    const DB_NAME = 'mYpuB_DB';
+    const DB_VERSION = 2; // Incrementado para manejar cambios en el esquema
+    const USER_STORE = 'users';
+    const FILE_STORE = 'files';
+    
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            
+            request.onerror = function(event) {
+                console.error('Error al abrir la base de datos:', event.target.error);
+                reject('Error al abrir la base de datos');
+            };
+            
+            request.onsuccess = function(event) {
+                db = event.target.result;
+                resolve(db);
+            };
+            
+            request.onupgradeneeded = function(event) {
+                const db = event.target.result;
+                
+                // Crear almacén de usuarios
+                if (!db.objectStoreNames.contains(USER_STORE)) {
+                    const userStore = db.createObjectStore(USER_STORE, { keyPath: 'email' });
+                    userStore.createIndex('email', 'email', { unique: true });
+                    userStore.createIndex('isActive', 'isActive', { unique: false });
+                    userStore.createIndex('isDeveloper', 'isDeveloper', { unique: false });
+                }
+                
+                // Crear almacén de archivos
+                if (!db.objectStoreNames.contains(FILE_STORE)) {
+                    const fileStore = db.createObjectStore(FILE_STORE, { keyPath: 'id', autoIncrement: true });
+                    fileStore.createIndex('userEmail', 'userEmail', { unique: false });
+                    fileStore.createIndex('type', 'type', { unique: false });
+                    fileStore.createIndex('visibility', 'visibility', { unique: false });
+                    fileStore.createIndex('uploadDate', 'uploadDate', { unique: false });
+                }
+            };
         });
     }
-
-    // Restaurar tema guardado
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-theme');
+    
+    // Operaciones CRUD para usuarios
+    function registerUser(user) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([USER_STORE], 'readwrite');
+                    const store = transaction.objectStore(USER_STORE);
+                    
+                    const request = store.add(user);
+                    
+                    request.onsuccess = function() {
+                        resolve();
+                    };
+                    
+                    request.onerror = function(event) {
+                        if (event.target.error.name === 'ConstraintError') {
+                            reject('El correo electrónico ya está registrado');
+                        } else {
+                            reject('Error al registrar el usuario');
+                        }
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
     }
-
-    // Manejar resize de la ventana para ajustes responsivos
-    window.addEventListener('resize', () => {
-        const isMobile = window.innerWidth < 768;
-        document.body.classList.toggle('mobile-view', isMobile);
+    
+    function loginUser(email, password) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([USER_STORE], 'readonly');
+                    const store = transaction.objectStore(USER_STORE);
+                    
+                    const request = store.get(email);
+                    
+                    request.onsuccess = function() {
+                        const user = request.result;
+                        
+                        if (user && user.password === password) {
+                            resolve(user);
+                        } else {
+                            reject('Credenciales incorrectas');
+                        }
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al buscar usuario');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function getAllUsers() {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([USER_STORE], 'readonly');
+                    const store = transaction.objectStore(USER_STORE);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = function() {
+                        resolve(request.result);
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al obtener usuarios');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function getUserByEmail(email) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([USER_STORE], 'readonly');
+                    const store = transaction.objectStore(USER_STORE);
+                    const request = store.get(email);
+                    
+                    request.onsuccess = function() {
+                        if (request.result) {
+                            resolve(request.result);
+                        } else {
+                            reject('Usuario no encontrado');
+                        }
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al buscar usuario');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function updateUser(email, updates) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([USER_STORE], 'readwrite');
+                    const store = transaction.objectStore(USER_STORE);
+                    
+                    // Primero obtener el usuario actual
+                    const getRequest = store.get(email);
+                    
+                    getRequest.onsuccess = function() {
+                        const user = getRequest.result;
+                        if (!user) {
+                            reject('Usuario no encontrado');
+                            return;
+                        }
+                        
+                        // Actualizar propiedades
+                        const updatedUser = { ...user, ...updates };
+                        
+                        // Guardar cambios
+                        const putRequest = store.put(updatedUser);
+                        
+                        putRequest.onsuccess = function() {
+                            resolve(updatedUser);
+                        };
+                        
+                        putRequest.onerror = function() {
+                            reject('Error al actualizar usuario');
+                        };
+                    };
+                    
+                    getRequest.onerror = function() {
+                        reject('Error al obtener usuario');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    // Operaciones CRUD para archivos
+    function saveFile(fileData) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readwrite');
+                    const store = transaction.objectStore(FILE_STORE);
+                    
+                    const request = store.add(fileData);
+                    
+                    request.onsuccess = function() {
+                        resolve(request.result);
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al guardar archivo');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function getAllFiles() {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readonly');
+                    const store = transaction.objectStore(FILE_STORE);
+                    const request = store.getAll();
+                    
+                    request.onsuccess = function() {
+                        resolve(request.result);
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al obtener archivos');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function getUserFiles(userEmail) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readonly');
+                    const store = transaction.objectStore(FILE_STORE);
+                    const index = store.index('userEmail');
+                    const request = index.getAll(userEmail);
+                    
+                    request.onsuccess = function() {
+                        resolve(request.result);
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al obtener archivos del usuario');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function getFileById(fileId) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readonly');
+                    const store = transaction.objectStore(FILE_STORE);
+                    const request = store.get(parseInt(fileId));
+                    
+                    request.onsuccess = function() {
+                        if (request.result) {
+                            resolve(request.result);
+                        } else {
+                            reject('Archivo no encontrado');
+                        }
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al buscar archivo');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function updateFile(fileId, updates) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readwrite');
+                    const store = transaction.objectStore(FILE_STORE);
+                    
+                    // Primero obtener el archivo actual
+                    const getRequest = store.get(parseInt(fileId));
+                    
+                    getRequest.onsuccess = function() {
+                        const file = getRequest.result;
+                        if (!file) {
+                            reject('Archivo no encontrado');
+                            return;
+                        }
+                        
+                        // Actualizar propiedades
+                        const updatedFile = { ...file, ...updates };
+                        
+                        // Guardar cambios
+                        const putRequest = store.put(updatedFile);
+                        
+                        putRequest.onsuccess = function() {
+                            resolve(updatedFile);
+                        };
+                        
+                        putRequest.onerror = function() {
+                            reject('Error al actualizar archivo');
+                        };
+                    };
+                    
+                    getRequest.onerror = function() {
+                        reject('Error al obtener archivo');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    function deleteFileFromDB(fileId) {
+        return new Promise((resolve, reject) => {
+            initDB()
+                .then(db => {
+                    const transaction = db.transaction([FILE_STORE], 'readwrite');
+                    const store = transaction.objectStore(FILE_STORE);
+                    const request = store.delete(parseInt(fileId));
+                    
+                    request.onsuccess = function() {
+                        resolve();
+                    };
+                    
+                    request.onerror = function() {
+                        reject('Error al eliminar archivo');
+                    };
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    
+    // Inicializar la base de datos al cargar la aplicación
+    initDB().catch(error => {
+        console.error('Error al inicializar la base de datos:', error);
+        showToast('Error', 'Hubo un problema al inicializar la aplicación', true);
     });
 });
-
-// Función para manejar errores de la aplicación
-const handleError = (error, context = '') => {
-    console.error(`Error en ${context}:`, error);
-    
-    // Mostrar mensaje de error al usuario
-    const errorMessage = document.createElement('div');
-    errorMessage.className = 'alert alert-danger alert-dismissible fade show';
-    errorMessage.innerHTML = `
-        <strong>Error:</strong> ${error.message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    const alertContainer = document.getElementById('alertContainer');
-    if (alertContainer) {
-        alertContainer.appendChild(errorMessage);
-        
-        // Remover la alerta después de 5 segundos
-        setTimeout(() => {
-            errorMessage.remove();
-        }, 5000);
-    }
-};
-
-// Sistema de búsqueda y filtrado de contenido
-const setupSearchSystem = () => {
-    const searchInput = document.getElementById('mediaSearch');
-    const filterSelect = document.getElementById('mediaFilter');
-
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleMediaSearch, 300));
-    }
-
-    if (filterSelect) {
-        filterSelect.addEventListener('change', handleMediaFilter);
-    }
-};
-
-const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-};
-
-const handleMediaSearch = async () => {
-    const searchTerm = document.getElementById('mediaSearch').value.toLowerCase();
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    
-    try {
-        const transaction = db.transaction(['media'], 'readonly');
-        const mediaStore = transaction.objectStore('media');
-        const allMedia = await mediaStore.getAll();
-
-        const filteredMedia = allMedia.filter(media => {
-            const isVisible = media.isPublic || media.userId === currentUser.email;
-            const matchesSearch = media.userId.toLowerCase().includes(searchTerm) ||
-                                (media.description && media.description.toLowerCase().includes(searchTerm));
-            return isVisible && matchesSearch;
-        });
-
-        updateGalleryDisplay(filteredMedia);
-    } catch (error) {
-        handleError(error, 'búsqueda de medios');
-    }
-};
-
-const handleMediaFilter = async (e) => {
-    const filterValue = e.target.value;
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-    try {
-        const transaction = db.transaction(['media'], 'readonly');
-        const mediaStore = transaction.objectStore('media');
-        const allMedia = await mediaStore.getAll();
-
-        let filteredMedia = allMedia;
-
-        switch (filterValue) {
-            case 'my-media':
-                filteredMedia = allMedia.filter(media => media.userId === currentUser.email);
-                break;
-            case 'shared-with-me':
-                filteredMedia = allMedia.filter(media => media.sharedWith?.includes(currentUser.email));
-                break;
-            case 'public':
-                filteredMedia = allMedia.filter(media => media.isPublic);
-                break;
-            case 'private':
-                filteredMedia = allMedia.filter(media => !media.isPublic && media.userId === currentUser.email);
-                break;
-            case 'most-liked':
-                filteredMedia = allMedia.filter(media => media.isPublic || media.userId === currentUser.email)
-                                     .sort((a, b) => (b.likes || 0) - (a.likes || 0));
-                break;
-        }
-
-        updateGalleryDisplay(filteredMedia);
-    } catch (error) {
-        handleError(error, 'filtrado de medios');
-    }
-};
-
-const updateGalleryDisplay = (mediaItems) => {
-    const galleryDiv = document.getElementById('mediaGallery');
-    if (!galleryDiv) return;
-
-    galleryDiv.innerHTML = '';
-    mediaItems.forEach(item => {
-        const card = createMediaCard(item);
-        galleryDiv.appendChild(card);
-    });
-};
-
-// Sistema de respaldo automático
-const setupAutoBackup = () => {
-    // Realizar respaldo cada 24 horas
-    setInterval(performBackup, 24 * 60 * 60 * 1000);
-    // Realizar respaldo inicial
-    performBackup();
-};
-
-const performBackup = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser || !currentUser.isDeveloper) return;
-
-    try {
-        const backup = {
-            timestamp: new Date().toISOString(),
-            users: await getAllFromStore('users'),
-            media: await getAllFromStore('media'),
-            notifications: await getAllFromStore('notifications')
-        };
-
-        // Guardar backup en localStorage
-        const backupKey = `mypub_backup_${backup.timestamp}`;
-        localStorage.setItem(backupKey, JSON.stringify(backup));
-
-        // Mantener solo los últimos 5 backups
-        cleanupOldBackups();
-
-        console.log('Backup realizado exitosamente:', backup.timestamp);
-    } catch (error) {
-        console.error('Error al realizar backup:', error);
-    }
-};
-
-const getAllFromStore = (storeName) => {
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.getAll();
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-};
-
-const cleanupOldBackups = () => {
-    const backupKeys = Object.keys(localStorage)
-        .filter(key => key.startsWith('mypub_backup_'))
-        .sort()
-        .reverse();
-
-    // Mantener solo los últimos 5 backups
-    backupKeys.slice(5).forEach(key => localStorage.removeItem(key));
-};
-
-// Sistema de estadísticas
-const updateStatistics = async () => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (!currentUser || !currentUser.isDeveloper) return;
-
-    try {
-        const stats = {
-            totalUsers: await getStoreCount('users'),
-            totalMedia: await getStoreCount('media'),
-            totalPublicMedia: await getPublicMediaCount(),
-            totalLikes: await getTotalLikes(),
-            mostActiveUsers: await getMostActiveUsers()
-        };
-
-        displayStatistics(stats);
-    } catch (error) {
-        handleError(error, 'actualización de estadísticas');
-    }
-};
-
-const getStoreCount = (storeName) => {
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.count();
-
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-};
-
-const getPublicMediaCount = async () => {
-    const media = await getAllFromStore('media');
-    return media.filter(item => item.isPublic).length;
-};
-
-const getTotalLikes = async () => {
-    const media = await getAllFromStore('media');
-    return media.reduce((total, item) => total + (item.likes || 0), 0);
-};
-
-const getMostActiveUsers = async () => {
-    const media = await getAllFromStore('media');
-    const userActivity = {};
-
-    media.forEach(item => {
-        userActivity[item.userId] = (userActivity[item.userId] || 0) + 1;
-    });
-
-    return Object.entries(userActivity)
-        .sort(([,a], [,b]) => b - a)
-        .slice(0, 5)
-        .map(([userId, count]) => ({ userId, count }));
-};
-
-const displayStatistics = (stats) => {
-    const statsContainer = document.getElementById('statisticsContainer');
-    if (!statsContainer) return;
-
-    statsContainer.innerHTML = `
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Estadísticas de mYpuB</h5>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Total de usuarios: ${stats.totalUsers}</li>
-                    <li class="list-group-item">Total de archivos: ${stats.totalMedia}</li>
-                    <li class="list-group-item">Archivos públicos: ${stats.totalPublicMedia}</li>
-                    <li class="list-group-item">Total de likes: ${stats.totalLikes}</li>
-                </ul>
-                <h6 class="mt-3">Usuarios más activos:</h6>
-                <ul class="list-group list-group-flush">
-                    ${stats.mostActiveUsers.map(user => `
-                        <li class="list-group-item">
-                            ${user.userId} - ${user.count} archivos
-                        </li>
-                    `).join('')}
-                </ul>
-            </div>
-        </div>
-    `;
-};
-
-// Inicialización de todas las funcionalidades
-const initializeApp = () => {
-    initDB();
-    setupEventListeners();
-    setupSearchSystem();
-    setupAutoBackup();
-    
-    // Actualizar estadísticas cada hora
-    setInterval(updateStatistics, 60 * 60 * 1000);
-    
-    // Verificar la sesión actual
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser) {
-        showMainPanel();
-        showWelcomeMessage(currentUser);
-        updateUI();
-    } else {
-        showLoginForm();
-    }
-};
-
-// Iniciar la aplicación cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', initializeApp);
