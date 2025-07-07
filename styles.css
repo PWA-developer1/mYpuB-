@@ -1,28 +1,52 @@
 .content-section {
-    display: none;
+    padding: 20px;
 }
 
-#upload-section {
-    display: block;
+.gallery-item {
+    margin-bottom: 20px;
+    position: relative;
 }
 
-.media-card {
-    margin-bottom: 1rem;
+.gallery-item img,
+.gallery-item video {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
 }
 
-.media-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem;
+.gallery-item .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.7);
+    padding: 10px;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    color: white;
 }
 
 .like-counter {
-    font-size: 0.9rem;
-    color: #666;
+    font-size: 0.9em;
+    color: #fff;
+    margin-left: 5px;
 }
 
-.comments-section {
-    max-height: 200px;
-    overflow-y: auto;
+.admin-only {
+    display: none;
+}
+
+.is-admin .admin-only {
+    display: block;
+}
+
+.user-card {
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.help-form {
+    padding: 20px;
 }
