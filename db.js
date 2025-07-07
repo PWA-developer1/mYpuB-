@@ -1,6 +1,6 @@
-class MediaDB {
+class MyPubDB {
     constructor() {
-        this.dbName = 'mYpuBDB';
+        this.dbName = 'myPubDB';
         this.dbVersion = 1;
         this.db = null;
         this.init();
@@ -21,16 +21,21 @@ class MediaDB {
 
                 // Users store
                 if (!db.objectStoreNames.contains('users')) {
-                    const userStore = db.createObjectStore('users', { keyPath: 'email' });
-                    userStore.createIndex('fullName', 'fullName', { unique: false });
+                    const usersStore = db.createObjectStore('users', { keyPath: 'email' });
+                    usersStore.createIndex('by_name', 'fullName');
                 }
 
                 // Media store
                 if (!db.objectStoreNames.contains('media')) {
                     const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
-                    mediaStore.createIndex('userId', 'userId', { unique: false });
-                    mediaStore.createIndex('type', 'type', { unique: false });
-                    mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    mediaStore.createIndex('by_user', 'userId');
+                    mediaStore.createIndex('by_date', 'uploadDate');
+                }
+
+                // Likes store
+                if (!db.objectStoreNames.contains('likes')) {
+                    const likesStore = db.createObjectStore('likes', { keyPath: ['mediaId', 'userId'] });
+                    likesStore.createIndex('by_media', 'mediaId');
                 }
             };
         });
@@ -69,6 +74,17 @@ class MediaDB {
         });
     }
 
+    async getMedia(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['media'], 'readonly');
+            const store = transaction.objectStore('media');
+            const request = store.get(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async getAllMedia() {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['media'], 'readonly');
@@ -79,4 +95,40 @@ class MediaDB {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async toggleLike(mediaId, userId) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['likes'], 'readwrite');
+            const store = transaction.objectStore('likes');
+            const request = store.get([mediaId, userId]);
+
+            request.onsuccess = () => {
+                if (request.result) {
+                    store.delete([mediaId, userId]).onsuccess = () => resolve(false);
+                } else {
+                    store.add({
+                        mediaId,
+                        userId,
+                        timestamp: new Date()
+                    }).onsuccess = () => resolve(true);
+                }
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getLikesCount(mediaId) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['likes'], 'readonly');
+            const store = transaction.objectStore('likes');
+            const index = store.index('by_media');
+            const request = index.count(IDBKeyRange.only(mediaId));
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
 }
+
+// Initialize database
+const db = new MyPubDB();
