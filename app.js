@@ -3,236 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mYpuB</title>
+    <title>mYpuB - Plataforma para Compartir Medios</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#ffffff">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <style>
-        .hidden { display: none; }
-        .media-card { margin-bottom: 20px; }
-        #helpOptions { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
-        .help-btn { width: 60px; height: 60px; border-radius: 50%; font-size: 24px; }
-        .loading { position: relative; }
-        .loading::after {
-            content: "Cargando...";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .hidden {
+            display: none;
+        }
+        .media-card {
+            margin-bottom: 20px;
+        }
+        .media-preview {
+            max-width: 100%;
+            height: auto;
         }
     </style>
 </head>
-<body class="bg-light">
-    <div class="container py-5">
-        <!-- Login Form -->
+<body>
+    <!-- Formularios de Autenticación -->
+    <div id="authForms" class="container mt-5">
+        <!-- Formulario de Inicio de Sesión -->
         <div id="loginForm">
-            <div class="card mx-auto" style="max-width: 500px;">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="text-center">Iniciar Sesión</h3>
+            <h2>Iniciar Sesión en mYpuB</h2>
+            <form id="login">
+                <div class="mb-3">
+                    <input type="email" class="form-control" id="loginEmail" placeholder="Correo electrónico" required>
                 </div>
-                <div class="card-body">
-                    <form id="loginFormElement">
-                        <div class="mb-3">
-                            <label for="loginEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="loginEmail" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="loginPassword" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="loginPassword" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Ingresar</button>
-                        <p class="text-center mt-3">¿No tienes cuenta? <a href="#" id="goToRegister">Regístrate</a></p>
-                    </form>
+                <div class="mb-3">
+                    <input type="password" class="form-control" id="loginPassword" placeholder="Contraseña" required>
                 </div>
-            </div>
+                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+                <button type="button" class="btn btn-link" id="showRegister">Registrarse</button>
+            </form>
         </div>
 
-        <!-- Registration Form -->
+        <!-- Formulario de Registro -->
         <div id="registerForm" class="hidden">
-            <div class="card mx-auto" style="max-width: 500px;">
-                <div class="card-header bg-success text-white">
-                    <h3 class="text-center">Registro de Usuario</h3>
+            <h2>Crear Cuenta</h2>
+            <form id="register">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="fullName" placeholder="Nombre completo" required>
                 </div>
-                <div class="card-body">
-                    <form id="registrationForm">
-                        <div class="mb-3">
-                            <label for="fullName" class="form-label">Nombre Completo</label>
-                            <input type="text" class="form-control" id="fullName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" required>
-                            <small class="text-muted">Debe terminar en @gmail.com</small>
-                        </div>
-                        <div class="mb-3">
-                            <label for="gender" class="form-label">Género</label>
-                            <select class="form-select" id="gender" required>
-                                <option value="M">Masculino</option>
-                                <option value="F">Femenino</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="country" class="form-label">País</label>
-                            <select class="form-select" id="country" required></select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="city" class="form-label">Ciudad</label>
-                            <select class="form-select" id="city" required disabled>
-                                <option value="">Primero seleccione un país</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="street" class="form-label">Calle</label>
-                            <select class="form-select" id="street" required disabled>
-                                <option value="">Primero seleccione una ciudad</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="phone" class="form-label">Teléfono</label>
-                            <div class="input-group">
-                                <span class="input-group-text" id="phonePrefix">+</span>
-                                <input type="tel" class="form-control" id="phone" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Contraseña</label>
-                            <input type="password" class="form-control" id="password" required>
-                            <small class="text-muted">Debe comenzar con mayúscula, 5 letras, 4 números y terminar con 2 símbolos (@, # o &)</small>
-                        </div>
-                        <button type="submit" class="btn btn-success w-100">Registrarse</button>
-                        <p class="text-center mt-3">¿Ya tienes cuenta? <a href="#" id="goToLogin">Inicia sesión</a></p>
-                    </form>
+                <div class="mb-3">
+                    <select class="form-select" id="country" required>
+                        <option value="">Seleccionar país</option>
+                    </select>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text" id="phonePrefix">+</span>
+                        <input type="tel" class="form-control" id="phone" placeholder="Número de teléfono" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <input type="email" class="form-control" id="registerEmail" placeholder="Correo electrónico" required>
+                </div>
+                <div class="mb-3">
+                    <input type="password" class="form-control" id="registerPassword" 
+                           placeholder="Contraseña (6 letras, 4 números, 2 símbolos)" required>
+                    <div id="passwordHelp" class="form-text">
+                        Debe contener 6 letras (primera mayúscula), 4 números y 2 símbolos (@,#,&)
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Registrarse</button>
+                <button type="button" class="btn btn-link" id="showLogin">Volver a Iniciar sesión</button>
+                <button type="button" class="btn btn-info" id="helpButton">Ayuda</button>
+            </form>
         </div>
+    </div>
 
-        <!-- Main Panel -->
-        <div id="mainPanel" class="hidden">
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="#">mYpuB</a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav">
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" data-section="upload">Subir</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" data-section="gallery">Galería</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" data-section="share">Compartir</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#" data-section="users">Usuarios</a>
-                            </li>
-                        </ul>
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item">
-                                <button id="logoutBtn" class="btn btn-outline-light">Cerrar Sesión</button>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-
-            <!-- Upload Section -->
-            <div id="uploadSection" class="section-content">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Subir Archivo</h4>
-                    </div>
-                    <div class="card-body">
-                        <form id="uploadForm">
-                            <div class="mb-3">
-                                <label for="mediaFile" class="form-label">Seleccionar archivo</label>
-                                <input class="form-control" type="file" id="mediaFile" required>
-                            </div>
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="public">
-                                <label class="form-check-label" for="public">Hacer público</label>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Subir</button>
-                        </form>
-                    </div>
+    <!-- Aplicación Principal -->
+    <div id="mainApp" class="hidden">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">mYpuB</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="uploadNav">SUBIR</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="galleryNav">GALERÍA</a>
+                        </li>
+                        <li class="nav-item developer-only hidden">
+                            <a class="nav-link" href="#" id="userManagementNav">GESTIÓN DE USUARIOS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="infoNav">INFORMACIÓN</a>
+                        </li>
+                    </ul>
+                    <button class="btn btn-light ms-auto" id="logoutBtn">Cerrar sesión</button>
                 </div>
             </div>
+        </nav>
 
-            <!-- Gallery Section -->
-            <div id="gallerySection" class="section-content hidden">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Galería de Medios</h4>
+        <!-- Secciones de Contenido -->
+        <div class="container mt-4">
+            <!-- Sección de Subida -->
+            <div id="uploadSection" class="section">
+                <h3>Subir Medios</h3>
+                <form id="uploadForm">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
                     </div>
-                    <div class="card-body">
-                        <div class="row" id="mediaGallery"></div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="isPublic">
+                        <label class="form-check-label" for="isPublic">Hacer público</label>
                     </div>
-                </div>
+                    <button type="submit" class="btn btn-primary">Subir</button>
+                </form>
             </div>
 
-            <!-- Share Section -->
-            <div id="shareSection" class="section-content hidden">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Compartir Archivos</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label for="userSelect" class="form-label">Seleccionar Usuario</label>
-                            <select class="form-select" id="userSelect"></select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="mediaSelect" class="form-label">Seleccionar Archivo</label>
-                            <select class="form-select" id="mediaSelect"></select>
-                        </div>
-                        <button id="shareBtn" class="btn btn-success">Compartir</button>
-                    </div>
-                </div>
+            <!-- Sección de Galería -->
+            <div id="gallerySection" class="section hidden">
+                <h3>Galería</h3>
+                <div id="mediaGrid" class="row"></div>
             </div>
 
-            <!-- Users Section -->
-            <div id="usersSection" class="section-content hidden">
+            <!-- Sección de Gestión de Usuarios -->
+            <div id="userManagementSection" class="section hidden">
+                <h3>Gestión de Usuarios</h3>
+                <div id="userList" class="list-group"></div>
+            </div>
+
+            <!-- Sección de Información -->
+            <div id="infoSection" class="section hidden">
+                <h3>Acerca de mYpuB</h3>
                 <div class="card">
-                    <div class="card-header">
-                        <h4>Administración de Usuarios</h4>
-                    </div>
                     <div class="card-body">
-                        <div id="usersList"></div>
+                        <h5 class="card-title">Información del Desarrollador</h5>
+                        <p><strong>Nombre:</strong> Tarciano ENZEMA NCHAMA</p>
+                        <p><strong>Educación:</strong> Graduado de la Universidad UNGE</p>
+                        <p><strong>Facultad:</strong> Facultad de Economía, Gestión y Administración</p>
+                        <p><strong>Departamento:</strong> Gestión de TI para Negocios</p>
+                        <p><strong>Contacto:</strong> enzemajr@gmail.com</p>
+                        <p><strong>Fecha de Finalización:</strong> 06/07/2025</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Help Button -->
-    <div id="helpBtn" class="btn btn-primary help-btn position-fixed">?</div>
-    <div id="helpOptions" class="hidden">
-        <button id="emailHelpBtn" class="btn btn-info mb-2">Email</button>
-        <button id="whatsappHelpBtn" class="btn btn-success">WhatsApp</button>
-    </div>
-
-    <!-- Email Help Modal -->
-    <div class="modal fade" id="emailHelpModal" tabindex="-1">
+    <!-- Modal de Ayuda -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Ayuda por Email</h5>
+                    <h5 class="modal-title">¿Necesitas Ayuda?</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="emailHelpForm">
+                    <button class="btn btn-primary mb-2 w-100" id="whatsappInstructions">
+                        Obtener instrucciones por WhatsApp
+                    </button>
+                    <button class="btn btn-secondary w-100" id="whatsappConsultation">
+                        Solicitar consulta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Formulario de Contacto por WhatsApp -->
+    <div class="modal fade" id="whatsappModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="whatsappModalTitle">Contactar por WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="whatsappForm">
                         <div class="mb-3">
-                            <label for="helpName" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="helpName" required>
+                            <input type="text" class="form-control" id="whatsappName" placeholder="Nombre completo" required>
                         </div>
                         <div class="mb-3">
-                            <label for="helpEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="helpEmail" required>
+                            <input type="tel" class="form-control" id="whatsappNumber" placeholder="Número de WhatsApp" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Enviar</button>
                     </form>
@@ -241,742 +198,236 @@
         </div>
     </div>
 
-    <!-- WhatsApp Help Modal -->
-    <div class="modal fade" id="whatsappHelpModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Ayuda por WhatsApp</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="whatsappHelpForm">
-                        <div class="mb-3">
-                            <label for="whatsappName" class="form-label">Nombre</label>
-                            <input type="text" class="form-control" id="whatsappName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="whatsappNumber" class="form-label">Número de WhatsApp</label>
-                            <input type="tel" class="form-control" id="whatsappNumber" required>
-                        </div>
-                        <button type="submit" class="btn btn-success">Enviar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- Bootstrap y Dependencias -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script Principal de la Aplicación -->
     <script>
-        // Database initialization
-        let db;
-        const DB_NAME = 'mYpuBDB';
-        const DB_VERSION = 2;
+        // Código para cargar países y manejar el prefijo telefónico
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar países al select
+            const countrySelect = document.getElementById('country');
+            
+            // Lista de países con sus prefijos
+            const countries = [
+                {name: "Afganistán", code: "AF", phone: "+93"},
+                {name: "Albania", code: "AL", phone: "+355"},
+                {name: "Alemania", code: "DE", phone: "+49"},
+                {name: "Andorra", code: "AD", phone: "+376"},
+                {name: "Angola", code: "AO", phone: "+244"},
+                {name: "Antigua y Barbuda", code: "AG", phone: "+1-268"},
+                {name: "Arabia Saudita", code: "SA", phone: "+966"},
+                {name: "Argelia", code: "DZ", phone: "+213"},
+                {name: "Argentina", code: "AR", phone: "+54"},
+                {name: "Armenia", code: "AM", phone: "+374"},
+                {name: "Australia", code: "AU", phone: "+61"},
+                {name: "Austria", code: "AT", phone: "+43"},
+                {name: "Azerbaiyán", code: "AZ", phone: "+994"},
+                {name: "Bahamas", code: "BS", phone: "+1-242"},
+                {name: "Bangladés", code: "BD", phone: "+880"},
+                {name: "Barbados", code: "BB", phone: "+1-246"},
+                {name: "Baréin", code: "BH", phone: "+973"},
+                {name: "Bélgica", code: "BE", phone: "+32"},
+                {name: "Belice", code: "BZ", phone: "+501"},
+                {name: "Benín", code: "BJ", phone: "+229"},
+                {name: "Bielorrusia", code: "BY", phone: "+375"},
+                {name: "Birmania", code: "MM", phone: "+95"},
+                {name: "Bolivia", code: "BO", phone: "+591"},
+                {name: "Bosnia y Herzegovina", code: "BA", phone: "+387"},
+                {name: "Botsuana", code: "BW", phone: "+267"},
+                {name: "Brasil", code: "BR", phone: "+55"},
+                {name: "Brunéi", code: "BN", phone: "+673"},
+                {name: "Bulgaria", code: "BG", phone: "+359"},
+                {name: "Burkina Faso", code: "BF", phone: "+226"},
+                {name: "Burundi", code: "BI", phone: "+257"},
+                {name: "Bután", code: "BT", phone: "+975"},
+                {name: "Cabo Verde", code: "CV", phone: "+238"},
+                {name: "Camboya", code: "KH", phone: "+855"},
+                {name: "Camerún", code: "CM", phone: "+237"},
+                {name: "Canadá", code: "CA", phone: "+1"},
+                {name: "Catar", code: "QA", phone: "+974"},
+                {name: "Chad", code: "TD", phone: "+235"},
+                {name: "Chile", code: "CL", phone: "+56"},
+                {name: "China", code: "CN", phone: "+86"},
+                {name: "Chipre", code: "CY", phone: "+357"},
+                {name: "Colombia", code: "CO", phone: "+57"},
+                {name: "Comoras", code: "KM", phone: "+269"},
+                {name: "Corea del Norte", code: "KP", phone: "+850"},
+                {name: "Corea del Sur", code: "KR", phone: "+82"},
+                {name: "Costa de Marfil", code: "CI", phone: "+225"},
+                {name: "Costa Rica", code: "CR", phone: "+506"},
+                {name: "Croacia", code: "HR", phone: "+385"},
+                {name: "Cuba", code: "CU", phone: "+53"},
+                {name: "Dinamarca", code: "DK", phone: "+45"},
+                {name: "Dominica", code: "DM", phone: "+1-767"},
+                {name: "Ecuador", code: "EC", phone: "+593"},
+                {name: "Egipto", code: "EG", phone: "+20"},
+                {name: "El Salvador", code: "SV", phone: "+503"},
+                {name: "Emiratos Árabes Unidos", code: "AE", phone: "+971"},
+                {name: "Eritrea", code: "ER", phone: "+291"},
+                {name: "Eslovaquia", code: "SK", phone: "+421"},
+                {name: "Eslovenia", code: "SI", phone: "+386"},
+                {name: "España", code: "ES", phone: "+34"},
+                {name: "Estados Unidos", code: "US", phone: "+1"},
+                {name: "Estonia", code: "EE", phone: "+372"},
+                {name: "Etiopía", code: "ET", phone: "+251"},
+                {name: "Filipinas", code: "PH", phone: "+63"},
+                {name: "Finlandia", code: "FI", phone: "+358"},
+                {name: "Fiyi", code: "FJ", phone: "+679"},
+                {name: "Francia", code: "FR", phone: "+33"},
+                {name: "Gabón", code: "GA", phone: "+241"},
+                {name: "Gambia", code: "GM", phone: "+220"},
+                {name: "Georgia", code: "GE", phone: "+995"},
+                {name: "Ghana", code: "GH", phone: "+233"},
+                {name: "Granada", code: "GD", phone: "+1-473"},
+                {name: "Grecia", code: "GR", phone: "+30"},
+                {name: "Guatemala", code: "GT", phone: "+502"},
+                {name: "Guinea", code: "GN", phone: "+224"},
+                {name: "Guinea Ecuatorial", code: "GQ", phone: "+240"},
+                {name: "Guinea-Bisáu", code: "GW", phone: "+245"},
+                {name: "Guyana", code: "GY", phone: "+592"},
+                {name: "Haití", code: "HT", phone: "+509"},
+                {name: "Honduras", code: "HN", phone: "+504"},
+                {name: "Hungría", code: "HU", phone: "+36"},
+                {name: "India", code: "IN", phone: "+91"},
+                {name: "Indonesia", code: "ID", phone: "+62"},
+                {name: "Irak", code: "IQ", phone: "+964"},
+                {name: "Irán", code: "IR", phone: "+98"},
+                {name: "Irlanda", code: "IE", phone: "+353"},
+                {name: "Islandia", code: "IS", phone: "+354"},
+                {name: "Islas Marshall", code: "MH", phone: "+692"},
+                {name: "Islas Salomón", code: "SB", phone: "+677"},
+                {name: "Israel", code: "IL", phone: "+972"},
+                {name: "Italia", code: "IT", phone: "+39"},
+                {name: "Jamaica", code: "JM", phone: "+1-876"},
+                {name: "Japón", code: "JP", phone: "+81"},
+                {name: "Jordania", code: "JO", phone: "+962"},
+                {name: "Kazajistán", code: "KZ", phone: "+7"},
+                {name: "Kenia", code: "KE", phone: "+254"},
+                {name: "Kirguistán", code: "KG", phone: "+996"},
+                {name: "Kiribati", code: "KI", phone: "+686"},
+                {name: "Kuwait", code: "KW", phone: "+965"},
+                {name: "Laos", code: "LA", phone: "+856"},
+                {name: "Lesoto", code: "LS", phone: "+266"},
+                {name: "Letonia", code: "LV", phone: "+371"},
+                {name: "Líbano", code: "LB", phone: "+961"},
+                {name: "Liberia", code: "LR", phone: "+231"},
+                {name: "Libia", code: "LY", phone: "+218"},
+                {name: "Liechtenstein", code: "LI", phone: "+423"},
+                {name: "Lituania", code: "LT", phone: "+370"},
+                {name: "Luxemburgo", code: "LU", phone: "+352"},
+                {name: "Macedonia del Norte", code: "MK", phone: "+389"},
+                {name: "Madagascar", code: "MG", phone: "+261"},
+                {name: "Malasia", code: "MY", phone: "+60"},
+                {name: "Malaui", code: "MW", phone: "+265"},
+                {name: "Maldivas", code: "MV", phone: "+960"},
+                {name: "Malí", code: "ML", phone: "+223"},
+                {name: "Malta", code: "MT", phone: "+356"},
+                {name: "Marruecos", code: "MA", phone: "+212"},
+                {name: "Mauricio", code: "MU", phone: "+230"},
+                {name: "Mauritania", code: "MR", phone: "+222"},
+                {name: "México", code: "MX", phone: "+52"},
+                {name: "Micronesia", code: "FM", phone: "+691"},
+                {name: "Moldavia", code: "MD", phone: "+373"},
+                {name: "Mónaco", code: "MC", phone: "+377"},
+                {name: "Mongolia", code: "MN", phone: "+976"},
+                {name: "Montenegro", code: "ME", phone: "+382"},
+                {name: "Mozambique", code: "MZ", phone: "+258"},
+                {name: "Namibia", code: "NA", phone: "+264"},
+                {name: "Nauru", code: "NR", phone: "+674"},
+                {name: "Nepal", code: "NP", phone: "+977"},
+                {name: "Nicaragua", code: "NI", phone: "+505"},
+                {name: "Níger", code: "NE", phone: "+227"},
+                {name: "Nigeria", code: "NG", phone: "+234"},
+                {name: "Noruega", code: "NO", phone: "+47"},
+                {name: "Nueva Zelanda", code: "NZ", phone: "+64"},
+                {name: "Omán", code: "OM", phone: "+968"},
+                {name: "Países Bajos", code: "NL", phone: "+31"},
+                {name: "Pakistán", code: "PK", phone: "+92"},
+                {name: "Palaos", code: "PW", phone: "+680"},
+                {name: "Panamá", code: "PA", phone: "+507"},
+                {name: "Papúa Nueva Guinea", code: "PG", phone: "+675"},
+                {name: "Paraguay", code: "PY", phone: "+595"},
+                {name: "Perú", code: "PE", phone: "+51"},
+                {name: "Polonia", code: "PL", phone: "+48"},
+                {name: "Portugal", code: "PT", phone: "+351"},
+                {name: "Reino Unido", code: "GB", phone: "+44"},
+                {name: "República Centroafricana", code: "CF", phone: "+236"},
+                {name: "República Checa", code: "CZ", phone: "+420"},
+                {name: "República del Congo", code: "CG", phone: "+242"},
+                {name: "República Democrática del Congo", code: "CD", phone: "+243"},
+                {name: "República Dominicana", code: "DO", phone: "+1-809, +1-829, +1-849"},
+                {name: "Ruanda", code: "RW", phone: "+250"},
+                {name: "Rumanía", code: "RO", phone: "+40"},
+                {name: "Rusia", code: "RU", phone: "+7"},
+                {name: "Samoa", code: "WS", phone: "+685"},
+                {name: "San Cristóbal y Nieves", code: "KN", phone: "+1-869"},
+                {name: "San Marino", code: "SM", phone: "+378"},
+                {name: "San Vicente y las Granadinas", code: "VC", phone: "+1-784"},
+                {name: "Santa Lucía", code: "LC", phone: "+1-758"},
+                {name: "Santo Tomé y Príncipe", code: "ST", phone: "+239"},
+                {name: "Senegal", code: "SN", phone: "+221"},
+                {name: "Serbia", code: "RS", phone: "+381"},
+                {name: "Seychelles", code: "SC", phone: "+248"},
+                {name: "Sierra Leona", code: "SL", phone: "+232"},
+                {name: "Singapur", code: "SG", phone: "+65"},
+                {name: "Siria", code: "SY", phone: "+963"},
+                {name: "Somalia", code: "SO", phone: "+252"},
+                {name: "Sri Lanka", code: "LK", phone: "+94"},
+                {name: "Sudáfrica", code: "ZA", phone: "+27"},
+                {name: "Sudán", code: "SD", phone: "+249"},
+                {name: "Sudán del Sur", code: "SS", phone: "+211"},
+                {name: "Suecia", code: "SE", phone: "+46"},
+                {name: "Suiza", code: "CH", phone: "+41"},
+                {name: "Surinam", code: "SR", phone: "+597"},
+                {name: "Tailandia", code: "TH", phone: "+66"},
+                {name: "Tanzania", code: "TZ", phone: "+255"},
+                {name: "Tayikistán", code: "TJ", phone: "+992"},
+                {name: "Timor Oriental", code: "TL", phone: "+670"},
+                {name: "Togo", code: "TG", phone: "+228"},
+                {name: "Tonga", code: "TO", phone: "+676"},
+                {name: "Trinidad y Tobago", code: "TT", phone: "+1-868"},
+                {name: "Túnez", code: "TN", phone: "+216"},
+                {name: "Turkmenistán", code: "TM", phone: "+993"},
+                {name: "Turquía", code: "TR", phone: "+90"},
+                {name: "Tuvalu", code: "TV", phone: "+688"},
+                {name: "Ucrania", code: "UA", phone: "+380"},
+                {name: "Uganda", code: "UG", phone: "+256"},
+                {name: "Uruguay", code: "UY", phone: "+598"},
+                {name: "Uzbekistán", code: "UZ", phone: "+998"},
+                {name: "Vanuatu", code: "VU", phone: "+678"},
+                {name: "Venezuela", code: "VE", phone: "+58"},
+                {name: "Vietnam", code: "VN", phone: "+84"},
+                {name: "Yemen", code: "YE", phone: "+967"},
+                {name: "Yibuti", code: "DJ", phone: "+253"},
+                {name: "Zambia", code: "ZM", phone: "+260"},
+                {name: "Zimbabue", code: "ZW", phone: "+263"}
+            ];
 
-        // Location API service (mock implementation)
-        class LocationService {
-            static async getCountries() {
-                try {
-                    const response = await fetch('https://restcountries.com/v3.1/all');
-                    const countries = await response.json();
-                    return countries.map(country => ({
-                        name: country.name.common,
-                        code: country.cca2,
-                        phonePrefix: country.idd.root + (country.idd.suffixes ? country.idd.suffixes[0] : ''),
-                        flag: country.flags?.png
-                    })).sort((a, b) => a.name.localeCompare(b.name));
-                } catch (error) {
-                    console.error('Error fetching countries:', error);
-                    // Fallback data
-                    return [
-                        { name: 'Estados Unidos', code: 'US', phonePrefix: '+1', flag: '' },
-                        { name: 'España', code: 'ES', phonePrefix: '+34', flag: '' },
-                        { name: 'México', code: 'MX', phonePrefix: '+52', flag: '' },
-                       {  name: 'Guinea Ecuatorial' code:'GQ',phonePrefix: '+240', flag: ''},
-                        // ... más países de respaldo
-                    ];
-                }
-            }
+            // Ordenar países alfabéticamente
+            countries.sort((a, b) => a.name.localeCompare(b.name));
 
-            static async getCities(countryCode) {
-                // En una implementación real, esto haría una llamada a una API de geolocalización
-                // Aquí usamos datos de ejemplo para demostración
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simular carga
+            // Llenar el select con los países
+            countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.code;
+                option.textContent = country.name;
+                option.dataset.phone = country.phone;
+                countrySelect.appendChild(option);
+            });
 
-                const citiesByCountry = {
-                    'US': ['Nueva York', 'Los Ángeles', 'Chicago', 'Houston', 'Phoenix', 'Filadelfia'],
-                    'ES': ['Madrid', 'Barcelona', 'Valencia', 'Sevilla', 'Zaragoza', 'Málaga'],
-                    'MX': ['Ciudad de México', 'Guadalajara', 'Monterrey', 'Puebla', 'Tijuana', 'León'],
-'GQ': ['Malabo', 'Bata', 'Ebibeyín', 'Mongomo', 'Evinayong'],
-                    // ... más países y ciudades
-                };
-
-                return citiesByCountry[countryCode] || [
-                    'Ciudad Principal', 'Ciudad Secundaria', 'Otra Ciudad'
-                ];
-            }
-
-            static async getStreets(countryCode, city) {
-                // En una implementación real, esto haría una llamada a una API de geolocalización
-                await new Promise(resolve => setTimeout(resolve, 300)); // Simular carga
-
-                const streetTypes = ['Calle', 'Avenida', 'Bulevar', 'Paseo', 'Camino'];
-                const streetNames = ['Principal', 'Central', 'Norte', 'Sur', 'Este', 'Oeste', 'Libertad', 'Independencia'];
+            // Manejar el cambio de país para actualizar el prefijo
+            countrySelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const phonePrefix = document.getElementById('phonePrefix');
                 
-                return Array.from({ length: 10 }, (_, i) => 
-                    `${streetTypes[i % streetTypes.length]} ${streetNames[i % streetNames.length]} ${i + 1}`
-                );
-            }
-        }
-
-        const initDB = () => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-            request.onerror = (event) => {
-                console.error('Database error:', event.target.error);
-            };
-
-            request.onupgradeneeded = (event) => {
-                db = event.target.result;
-
-                // Users store
-                if (!db.objectStoreNames.contains('users')) {
-                    const userStore = db.createObjectStore('users', { keyPath: 'email' });
-                    userStore.createIndex('fullName', 'fullName', { unique: false });
-                    userStore.createIndex('country', 'country', { unique: false });
+                if (selectedOption.value) {
+                    phonePrefix.textContent = selectedOption.dataset.phone;
+                } else {
+                    phonePrefix.textContent = '+';
                 }
-
-                // Media store
-                if (!db.objectStoreNames.contains('media')) {
-                    const mediaStore = db.createObjectStore('media', { keyPath: 'id', autoIncrement: true });
-                    mediaStore.createIndex('userId', 'userId', { unique: false });
-                    mediaStore.createIndex('timestamp', 'timestamp', { unique: false });
-                }
-
-                // Locations cache store
-                if (!db.objectStoreNames.contains('locations')) {
-                    const locationsStore = db.createObjectStore('locations', { keyPath: 'id' });
-                    locationsStore.createIndex('type', 'type', { unique: false });
-                    locationsStore.createIndex('parentId', 'parentId', { unique: false });
-                }
-            };
-
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                console.log('Database initialized successfully');
-            };
-        };
-
-        // Initialize the database when the page loads
-        document.addEventListener('DOMContentLoaded', async () => {
-            initDB();
-            await loadCountries();
-            initializeUI();
-            setupEventListeners();
+            });
         });
-
-        // UI initialization
-        const initializeUI = () => {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (currentUser) {
-                showMainPanel();
-                showWelcomeMessage(currentUser);
-            } else {
-                showLoginForm();
-            }
-        };
-
-        // Country data loading
-        const loadCountries = async () => {
-            try {
-                const countrySelect = document.getElementById('country');
-                countrySelect.innerHTML = '<option value="" disabled selected>Cargando países...</option>';
-                countrySelect.disabled = true;
-
-                const countries = await LocationService.getCountries();
-                
-                countrySelect.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Seleccione un país';
-                defaultOption.selected = true;
-                defaultOption.disabled = true;
-                countrySelect.appendChild(defaultOption);
-
-                countries.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country.code;
-                    option.dataset.prefix = country.phonePrefix;
-                    option.textContent = country.name;
-                    countrySelect.appendChild(option);
-                });
-
-                countrySelect.disabled = false;
-            } catch (error) {
-                console.error('Error loading countries:', error);
-                alert('Error al cargar la lista de países. Por favor recargue la página.');
-            }
-        };
-
-        // Load cities for selected country
-        const loadCities = async (countryCode) => {
-            const citySelect = document.getElementById('city');
-            const streetSelect = document.getElementById('street');
-            
-            citySelect.innerHTML = '<option value="" disabled selected>Cargando ciudades...</option>';
-            citySelect.disabled = true;
-            streetSelect.innerHTML = '<option value="">Primero seleccione una ciudad</option>';
-            streetSelect.disabled = true;
-            
-            try {
-                const cities = await LocationService.getCities(countryCode);
-                
-                citySelect.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Seleccione una ciudad';
-                defaultOption.selected = true;
-                defaultOption.disabled = true;
-                citySelect.appendChild(defaultOption);
-                
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city;
-                    option.textContent = city;
-                    citySelect.appendChild(option);
-                });
-                
-                citySelect.disabled = false;
-            } catch (error) {
-                console.error('Error loading cities:', error);
-                citySelect.innerHTML = '<option value="" disabled selected>Error al cargar ciudades</option>';
-            }
-        };
-
-        // Load streets for selected city
-        const loadStreets = async (countryCode, city) => {
-            const streetSelect = document.getElementById('street');
-            
-            streetSelect.innerHTML = '<option value="" disabled selected>Cargando calles...</option>';
-            streetSelect.disabled = true;
-            
-            try {
-                const streets = await LocationService.getStreets(countryCode, city);
-                
-                streetSelect.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Seleccione una calle';
-                defaultOption.selected = true;
-                defaultOption.disabled = true;
-                streetSelect.appendChild(defaultOption);
-                
-                streets.forEach(street => {
-                    const option = document.createElement('option');
-                    option.value = street;
-                    option.textContent = street;
-                    streetSelect.appendChild(option);
-                });
-                
-                streetSelect.disabled = false;
-            } catch (error) {
-                console.error('Error loading streets:', error);
-                streetSelect.innerHTML = '<option value="" disabled selected>Error al cargar calles</option>';
-            }
-        };
-
-        // Event listeners setup
-        const setupEventListeners = () => {
-            // Navigation
-            document.getElementById('goToLogin').addEventListener('click', showLoginForm);
-            document.getElementById('goToRegister').addEventListener('click', showRegisterForm);
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-
-            // Forms
-            document.getElementById('registrationForm').addEventListener('submit', handleRegistration);
-            document.getElementById('loginFormElement').addEventListener('submit', handleLogin);
-            document.getElementById('uploadForm').addEventListener('submit', handleUpload);
-
-            // Country select - cascading effect
-            document.getElementById('country').addEventListener('change', async (e) => {
-                const selectedOption = e.target.options[e.target.selectedIndex];
-                document.getElementById('phonePrefix').textContent = selectedOption.dataset.prefix || '+';
-                
-                if (e.target.value) {
-                    await loadCities(e.target.value);
-                } else {
-                    document.getElementById('city').innerHTML = '<option value="">Primero seleccione un país</option>';
-                    document.getElementById('city').disabled = true;
-                    document.getElementById('street').innerHTML = '<option value="">Primero seleccione una ciudad</option>';
-                    document.getElementById('street').disabled = true;
-                }
-            });
-
-            // City select - cascading effect
-            document.getElementById('city').addEventListener('change', async (e) => {
-                const countrySelect = document.getElementById('country');
-                if (e.target.value && countrySelect.value) {
-                    await loadStreets(countrySelect.value, e.target.value);
-                } else {
-                    document.getElementById('street').innerHTML = '<option value="">Primero seleccione una ciudad</option>';
-                    document.getElementById('street').disabled = true;
-                }
-            });
-
-            // Help system
-            document.getElementById('helpBtn').addEventListener('click', toggleHelpPanel);
-            document.getElementById('emailHelpBtn').addEventListener('click', showEmailHelpModal);
-            document.getElementById('whatsappHelpBtn').addEventListener('click', showWhatsappHelpModal);
-            document.getElementById('emailHelpForm').addEventListener('submit', handleEmailHelp);
-            document.getElementById('whatsappHelpForm').addEventListener('submit', handleWhatsappHelp);
-
-            // Navigation menu
-            document.querySelectorAll('[data-section]').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showSection(e.target.dataset.section);
-                });
-            });
-        };
-
-        // User registration
-        const handleRegistration = async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            if (!validateEmail(email) || !validatePassword(password)) {
-                alert('Por favor, verifica los requisitos de email y contraseña');
-                return;
-            }
-
-            const user = {
-                fullName: document.getElementById('fullName').value,
-                email: email,
-                gender: document.getElementById('gender').value,
-                country: document.getElementById('country').options[document.getElementById('country').selectedIndex].text,
-                city: document.getElementById('city').value,
-                street: document.getElementById('street').value,
-                phone: document.getElementById('phonePrefix').textContent + document.getElementById('phone').value,
-                password: password,
-                isAdmin: password.startsWith('Mpteen')
-            };
-
-            try {
-                const transaction = db.transaction(['users'], 'readwrite');
-                const userStore = transaction.objectStore('users');
-                await userStore.add(user);
-                
-                localStorage.setItem('currentUser', JSON.stringify(user));
-                showMainPanel();
-                showWelcomeMessage(user);
-            } catch (error) {
-                console.error('Error in registration:', error);
-                alert('Error al registrar el usuario. El email ya puede estar en uso.');
-            }
-        };
-
-        // Validation functions
-        const validateEmail = (email) => {
-            return email.endsWith('@gmail.com');
-        };
-
-        const validatePassword = (password) => {
-            const regex = /^[A-Z][a-zA-Z]{5}[0-9]{4}[@#&]{2}$/;
-            return regex.test(password);
-        };
-
-        // Login handling
-        const handleLogin = async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                const transaction = db.transaction(['users'], 'readonly');
-                const userStore = transaction.objectStore('users');
-                const user = await userStore.get(email);
-
-                if (user && user.password === password) {
-                    localStorage.setItem('currentUser', JSON.stringify(user));
-                    showMainPanel();
-                    showWelcomeMessage(user);
-                } else {
-                    alert('Credenciales inválidas');
-                }
-            } catch (error) {
-                console.error('Error in login:', error);
-                alert('Error al iniciar sesión');
-            }
-        };
-
-        // Welcome message
-        const showWelcomeMessage = (user) => {
-            const prefix = user.gender === 'M' ? 'Sr.' : 'Sra.';
-            alert(`¡Bienvenido/a al sistema, ${prefix} ${user.fullName}!`);
-        };
-
-        // Media upload
-        const handleUpload = async (e) => {
-            e.preventDefault();
-
-            const file = document.getElementById('mediaFile').files[0];
-            const isPublic = document.getElementById('public').checked;
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-            if (!file || !currentUser) return;
-
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const media = {
-                    userId: currentUser.email,
-                    data: event.target.result,
-                    type: file.type,
-                    isPublic: isPublic,
-                    timestamp: new Date().toISOString(),
-                    likes: 0,
-                    dislikes: 0,
-                    comments: []
-                };
-
-                try {
-                    const transaction = db.transaction(['media'], 'readwrite');
-                    const mediaStore = transaction.objectStore('media');
-                    await mediaStore.add(media);
-                    alert('Archivo subido exitosamente');
-                    showSection('gallery');
-                    loadGallery();
-                } catch (error) {
-                    console.error('Error uploading file:', error);
-                    alert('Error al subir el archivo');
-                }
-            };
-
-            reader.readAsDataURL(file);
-        };
-
-        // Gallery loading
-        const loadGallery = async () => {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (!currentUser) return;
-
-            try {
-                const transaction = db.transaction(['media'], 'readonly');
-                const mediaStore = transaction.objectStore('media');
-                const media = await mediaStore.getAll();
-
-                const galleryDiv = document.getElementById('mediaGallery');
-                galleryDiv.innerHTML = '';
-
-                media.forEach(item => {
-                    if (item.isPublic || item.userId === currentUser.email) {
-                        const card = createMediaCard(item);
-                        galleryDiv.appendChild(card);
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading gallery:', error);
-            }
-        };
-
-        // Media card creation
-        const createMediaCard = (media) => {
-            const card = document.createElement('div');
-            card.className = 'col-md-4 media-card';
-            
-            const content = document.createElement('div');
-            content.className = 'card';
-            
-            const mediaElement = media.type.startsWith('image/') 
-                ? `<img src="${media.data}" class="card-img-top" alt="Media content">`
-                : `<video src="${media.data}" controls class="card-img-top">Your browser does not support video.</video>`;
-
-            content.innerHTML = `
-                ${mediaElement}
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary like-btn">
-                                👍 <span class="like-count">${media.likes}</span>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger dislike-btn">
-                                👎 <span class="dislike-count">${media.dislikes}</span>
-                            </button>
-                        </div>
-                        ${media.isPublic ? '<button class="btn btn-sm btn-success">Descargar</button>' : ''}
-                    </div>
-                </div>
-            `;
-
-            // Add event listeners for likes and downloads
-            const likeBtn = content.querySelector('.like-btn');
-            const dislikeBtn = content.querySelector('.dislike-btn');
-            
-            likeBtn.addEventListener('click', () => handleLike(media.id, true));
-            dislikeBtn.addEventListener('click', () => handleLike(media.id, false));
-
-            const downloadBtn = content.querySelector('.btn-success');
-            if (downloadBtn) {
-                downloadBtn.addEventListener('click', () => {
-                    const link = document.createElement('a');
-                    link.href = media.data;
-                    link.download = `mypub_media_${media.id}${media.type.startsWith('image/') ? '.jpg' : '.mp4'}`;
-                    link.click();
-                });
-            }
-
-            card.appendChild(content);
-            return card;
-        };
-
-        // Like/Dislike handling
-        const handleLike = async (mediaId, isLike) => {
-            try {
-                const transaction = db.transaction(['media'], 'readwrite');
-                const mediaStore = transaction.objectStore('media');
-                const media = await mediaStore.get(mediaId);
-
-                if (isLike) {
-                    media.likes++;
-                } else {
-                    media.dislikes++;
-                }
-
-                await mediaStore.put(media);
-                loadGallery();
-            } catch (error) {
-                console.error('Error updating likes:', error);
-            }
-        };
-
-        // Help system
-        const toggleHelpPanel = () => {
-            document.getElementById('helpOptions').classList.toggle('hidden');
-        };
-
-        const showEmailHelpModal = () => {
-            const modal = new bootstrap.Modal(document.getElementById('emailHelpModal'));
-            modal.show();
-        };
-
-        const showWhatsappHelpModal = () => {
-            const modal = new bootstrap.Modal(document.getElementById('whatsappHelpModal'));
-            modal.show();
-        };
-
-        const handleEmailHelp = (e) => {
-            e.preventDefault();
-            const name = document.getElementById('helpName').value;
-            const email = document.getElementById('helpEmail').value;
-            
-            const mailtoLink = `mailto:enzemajr@gmail.com?subject=Ayuda%20mYpuB&body=Hola%20Sr.%20Desarrollador%20de%20mYpuB%2C%0A%0AEl%20usuario%20${name}%2C%20con%20el%20email%20${email}%2C%20solicita%20instrucciones%20para%20crear%20una%20cuenta%20de%20acceso%20a%20mYpuB%20y%20más%20cosas%20sobre%20la%20aplicación.%0A%0AGracias!`;
-            
-            window.location.href = mailtoLink;
-        };
-
-        const handleWhatsappHelp = (e) => {
-            e.preventDefault();
-            const name = document.getElementById('whatsappName').value;
-            const number = document.getElementById('whatsappNumber').value;
-            
-            const message = `Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el número ${number}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación. Gracias!`;
-            const whatsappLink = `https://wa.me/240222084663?text=${encodeURIComponent(message)}`;
-            
-            window.open(whatsappLink, '_blank');
-        };
-
-        // UI navigation
-        const showSection = (sectionId) => {
-            document.querySelectorAll('.section-content').forEach(section => {
-                section.classList.add('hidden');
-            });
-            
-            const currentSection = document.getElementById(`${sectionId}Section`);
-            if (currentSection) {
-                currentSection.classList.remove('hidden');
-                if (sectionId === 'gallery') {
-                    loadGallery();
-                } else if (sectionId === 'share') {
-                    loadShareSection();
-                } else if (sectionId === 'users') {
-                    loadUserManagement();
-                }
-            }
-        };
-
-        const showMainPanel = () => {
-            document.getElementById('registerForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('mainPanel').classList.remove('hidden');
-            showSection('upload');
-        };
-
-        const showLoginForm = () => {
-            document.getElementById('registerForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
-            document.getElementById('mainPanel').classList.add('hidden');
-        };
-
-        const showRegisterForm = () => {
-            document.getElementById('registerForm').classList.remove('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('mainPanel').classList.add('hidden');
-        };
-
-        // Welcome message modification
-        const showWelcomeMessage = (user) => {
-            const prefix = user.gender === 'M' ? 'Bienvenido' : 'Bienvenida';
-            const title = user.gender === 'M' ? 'Sr.' : 'Sra.';
-            alert(`${prefix} a <span style="font-family: Georgia, serif; font-weight: bold;">mYpuB</span>, ${title} ${user.fullName}!`);
-        };
-
-        const logout = () => {
-            localStorage.removeItem('currentUser');
-            showLoginForm();
-        };
-
-        // User management functions (developer only)
-        const loadUserManagement = async () => {
-            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-            if (!currentUser || !currentUser.isAdmin) return;
-
-            try {
-                const transaction = db.transaction(['users'], 'readonly');
-                const userStore = transaction.objectStore('users');
-                const users = await userStore.getAll();
-
-                const usersList = document.getElementById('usersList');
-                usersList.innerHTML = '';
-
-                users.forEach(user => {
-                    const userCard = document.createElement('div');
-                    userCard.className = 'card mb-3';
-                    userCard.innerHTML = `
-                        <div class="card-body">
-                            <h5 class="card-title">${user.fullName}</h5>
-                            <p class="card-text">Email: ${user.email}</p>
-                            <p class="card-text">Teléfono: ${user.phone}</p>
-                            <button class="btn btn-warning btn-sm me-2" onclick="blockUser('${user.email}')">
-                                ${user.blocked ? 'Desbloquear' : 'Bloquear'}
-                            </button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.email}')">
-                                Eliminar
-                            </button>
-                        </div>
-                    `;
-                    usersList.appendChild(userCard);
-                });
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        };
-
-        const blockUser = async (email) => {
-            try {
-                const transaction = db.transaction(['users'], 'readwrite');
-                const userStore = transaction.objectStore('users');
-                const user = await userStore.get(email);
-                
-                user.blocked = !user.blocked;
-                await userStore.put(user);
-                loadUserManagement();
-            } catch (error) {
-                console.error('Error blocking user:', error);
-            }
-        };
-
-        const deleteUser = async (email) => {
-            if (!confirm('¿Está seguro de que desea eliminar este usuario?')) return;
-
-            try {
-                const transaction = db.transaction(['users'], 'readwrite');
-                const userStore = transaction.objectStore('users');
-                await userStore.delete(email);
-                loadUserManagement();
-            } catch (error) {
-                console.error('Error deleting user:', error);
-            }
-        };
-
-        // Share functionality
-        const loadShareSection = async () => {
-            try {
-                const transaction = db.transaction(['users', 'media'], 'readonly');
-                const userStore = transaction.objectStore('users');
-                const mediaStore = transaction.objectStore('media');
-                
-                const users = await userStore.getAll();
-                const media = await mediaStore.getAll();
-                const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
-                const userSelect = document.getElementById('userSelect');
-                const mediaSelect = document.getElementById('mediaSelect');
-
-                userSelect.innerHTML = '';
-                mediaSelect.innerHTML = '';
-
-                users.forEach(user => {
-                    if (user.email !== currentUser.email) {
-                        const option = document.createElement('option');
-                        option.value = user.email;
-                        option.textContent = user.fullName;
-                        userSelect.appendChild(option);
-                    }
-                });
-
-                media.forEach(item => {
-                    if (item.userId === currentUser.email) {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = `Media ${item.id} (${item.type.split('/')[0]})`;
-                        mediaSelect.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading share options:', error);
-            }
-        };
-
-        document.getElementById('shareBtn').addEventListener('click', async () => {
-            const selectedUser = document.getElementById('userSelect').value;
-            const selectedMedia = document.getElementById('mediaSelect').value;
-
-            if (!selectedUser || !selectedMedia) {
-                alert('Por favor, seleccione un usuario y un archivo para compartir');
-                return;
-            }
-
-            try {
-                const transaction = db.transaction(['media'], 'readonly');
-                const mediaStore = transaction.objectStore('media');
-                const media = await mediaStore.get(parseInt(selectedMedia));
-
-                // Create a new shared media entry
-                const sharedMedia = {
-                    ...media,
-                    id: undefined, // Let autoIncrement handle the new ID
-                    originalId: media.id,
-                    userId: selectedUser,
-                    sharedBy: JSON.parse(localStorage.getItem('currentUser')).email,
-                    timestamp: new Date().toISOString()
-                };
-
-                const shareTransaction = db.transaction(['media'], 'readwrite');
-                const shareStore = shareTransaction.objectStore('media');
-                await shareStore.add(sharedMedia);
-
-                alert('Archivo compartido exitosamente');
-            } catch (error) {
-                console.error('Error sharing media:', error);
-                alert('Error al compartir el archivo');
-            }
-        });
-
-        // Make functions available globally for HTML onclick handlers
-        window.blockUser = blockUser;
-        window.deleteUser = deleteUser;
     </script>
 </body>
 </html>
