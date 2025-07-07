@@ -1,240 +1,113 @@
 class Auth {
-    constructor(db) {
-        this.db = db;
+    constructor(database) {
+        this.db = database;
         this.currentUser = null;
         this.initializeListeners();
-        this.loadCountriesData();
-    }
-
-    async loadCountriesData() {
-        try {
-            const response = await fetch('https://restcountries.com/v3.1/all');
-            const countries = await response.json();
-            
-            const countrySelect = document.getElementById('country');
-            countries.sort((a, b) => a.name.common.localeCompare(b.name.common))
-                    .forEach(country => {
-                const option = document.createElement('option');
-                option.value = country.cca2;
-                option.textContent = country.name.common;
-                option.dataset.phoneCode = country.idd.root + (country.idd.suffixes?.[0] || '');
-                countrySelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading countries:', error);
-        }
     }
 
     initializeListeners() {
-        // Login form
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.login(
-                document.getElementById('loginEmail').value,
-                document.getElementById('loginPassword').value
-            );
-        });
-
-        // Register form
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.register(this.getRegisterFormData());
-        });
-
-        // Country selection
-        document.getElementById('country').addEventListener('change', (e) => {
-            this.handleCountryChange(e.target.value);
-        });
-
-        // Help button
-        document.getElementById('helpBtn').addEventListener('click', () => {
-            const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
-            helpModal.show();
-        });
-
-        // Email help
-        document.getElementById('emailHelpBtn').addEventListener('click', () => {
-            this.showEmailHelpForm();
-        });
-
-        // WhatsApp help
-        document.getElementById('whatsappHelpBtn').addEventListener('click', () => {
-            this.showWhatsAppHelpForm();
-        });
+        document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+        document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
+        document.getElementById('help-btn').addEventListener('click', () => this.showHelpModal());
+        document.getElementById('email-help').addEventListener('click', () => this.handleEmailHelp());
+        document.getElementById('whatsapp-help').addEventListener('click', () => this.handleWhatsAppHelp());
     }
 
-    getRegisterFormData() {
-        return {
-            fullName: document.getElementById('fullName').value,
-            email: document.getElementById('email').value,
-            country: document.getElementById('country').value,
-            city: document.getElementById('city').value,
-            street: document.getElementById('street').value,
-            phone: document.getElementById('phonePrefix').textContent + document.getElementById('phone').value,
-            password: document.getElementById('password').value
-        };
+    validateEmail(email) {
+        return email.endsWith('@gmail.com');
     }
 
-    async login(email, password) {
+    validatePassword(password, isDeveloper = false) {
+        if (isDeveloper) {
+            return /^Mpteen\d{4}[@#&]{2}$/.test(password);
+        }
+        return /^[A-Z][a-z]{5}\d{4}[@#&]{2}$/.test(password);
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
         try {
             const user = await this.db.getUser(email);
             if (user && user.password === password) {
                 this.currentUser = user;
+                this.showWelcomeMessage(user);
                 this.showMainApp();
             } else {
                 alert('Credenciales inválidas');
             }
         } catch (error) {
-            console.error('Error en login:', error);
+            console.error('Error during login:', error);
             alert('Error al iniciar sesión');
         }
     }
 
-    async register(userData) {
-        if (!this.validateRegisterData(userData)) {
+    async handleRegister(e) {
+        e.preventDefault();
+        const formData = {
+            fullname: document.getElementById('fullname').value,
+            email: document.getElementById('email').value,
+            gender: document.querySelector('input[name="gender"]:checked').value,
+            country: document.getElementById('country').value,
+            phone: document.getElementById('phone-prefix').textContent + document.getElementById('phone').value,
+            password: document.getElementById('password').value
+        };
+
+        if (!this.validateEmail(formData.email)) {
+            alert('Por favor, use una dirección de Gmail válida');
+            return;
+        }
+
+        if (!this.validatePassword(formData.password)) {
+            alert('La contraseña no cumple con los requisitos');
             return;
         }
 
         try {
-            await this.db.addUser(userData);
-            this.currentUser = userData;
+            await this.db.addUser(formData);
+            this.currentUser = formData;
+            this.showWelcomeMessage(formData);
             this.showMainApp();
         } catch (error) {
-            console.error('Error en registro:', error);
+            console.error('Error during registration:', error);
             alert('Error al registrar usuario');
         }
     }
 
-    validateRegisterData(userData) {
-        // Validar email (debe ser Gmail)
-        if (!userData.email.endsWith('@gmail.com')) {
-            alert('El email debe ser de Gmail');
-            return false;
-        }
-
-        // Validar contraseña
-        const passwordRegex = /^[A-Z][a-z]{5}\d{4}[@#&]{2}$/;
-        if (!passwordRegex.test(userData.password)) {
-            alert('La contraseña no cumple con el formato requerido');
-            return false;
-        }
-
-        // Validar si es contraseña de desarrollador
-        if (userData.password.startsWith('Mpteen')) {
-            userData.isDeveloper = true;
-        }
-
-        return true;
-    }
-
-    async handleCountryChange(countryCode) {
-        const citySelect = document.getElementById('city');
-        const streetSelect = document.getElementById('street');
-        const phonePrefix = document.getElementById('phonePrefix');
-        
-        // Set phone prefix
-        const selectedOption = document.querySelector(`#country option[value="${countryCode}"]`);
-        if (selectedOption) {
-            phonePrefix.textContent = selectedOption.dataset.phoneCode;
-        }
-
-        // Load cities (using a geocoding API would be ideal here)
-        try {
-            // Simulated API call - replace with actual API
-            const response = await fetch(`https://api.example.com/cities/${countryCode}`);
-            const cities = await response.json();
-            
-            citySelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city.id;
-                option.textContent = city.name;
-                citySelect.appendChild(option);
-            });
-            
-            citySelect.disabled = false;
-            streetSelect.disabled = true;
-            streetSelect.innerHTML = '<option value="">Seleccione una calle</option>';
-        } catch (error) {
-            console.error('Error loading cities:', error);
-        }
+    showWelcomeMessage(user) {
+        const prefix = user.gender === 'male' ? 'Sr.' : 'Sra.';
+        alert(`¡Bienvenido/a al sistema ${prefix} ${user.fullname}!`);
     }
 
     showMainApp() {
-        document.getElementById('auth-section').classList.add('d-none');
-        document.getElementById('main-section').classList.remove('d-none');
+        document.getElementById('auth-container').classList.add('d-none');
+        document.getElementById('main-container').classList.remove('d-none');
+    }
+
+    showHelpModal() {
+        const modal = new bootstrap.Modal(document.getElementById('helpModal'));
+        modal.show();
+    }
+
+    handleEmailHelp() {
+        const name = prompt('Por favor, ingrese su nombre completo:');
+        const email = prompt('Por favor, ingrese su dirección de correo electrónico:');
         
-        if (this.currentUser.isDeveloper) {
-            document.body.classList.add('is-admin');
+        if (name && email) {
+            const mailtoLink = `mailto:enzemajr@gmail.com?subject=Consulta sobre mYpuB&body=Hola Sr. Desarrollador de mYpub, el usuario ${name}, con el email ${email}, solicita instrucciones para crear una cuenta de acceso a mYpuB y más cosas sobre la aplicación, Gracias!`;
+            window.location.href = mailtoLink;
         }
     }
 
-    showEmailHelpForm() {
-        const modalBody = document.querySelector('#helpModal .modal-body');
-        modalBody.innerHTML = `
-            <form id="emailHelpForm" class="help-form">
-                <div class="mb-3">
-                    <label for="helpName" class="form-label">Nombre completo</label>
-                    <input type="text" class="form-control" id="helpName" required>
-                </div>
-                <div class="mb-3">
-                    <label for="helpEmail" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="helpEmail" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Enviar consulta</button>
-            </form>
-        `;
-
-        document.getElementById('emailHelpForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.sendEmailHelp(
-                document.getElementById('helpName').value,
-                document.getElementById('helpEmail').value
-            );
-        });
-    }
-
-    showWhatsAppHelpForm() {
-        const modalBody = document.querySelector('#helpModal .modal-body');
-        modalBody.innerHTML = `
-            <form id="whatsappHelpForm" class="help-form">
-                <div class="mb-3">
-                    <label for="helpNameWA" class="form-label">Nombre completo</label>
-                    <input type="text" class="form-control" id="helpNameWA" required>
-                </div>
-                <div class="mb-3">
-                    <label for="helpPhone" class="form-label">Número de WhatsApp</label>
-                    <input type="tel" class="form-control" id="helpPhone" required>
-                </div>
-                <button type="submit" class="btn btn-success">Enviar consulta</button>
-            </form>
-        `;
-
-        document.getElementById('whatsappHelpForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.sendWhatsAppHelp(
-                document.getElementById('helpNameWA').value,
-                document.getElementById('helpPhone').value
-            );
-        });
-    }
-
-    async sendEmailHelp(name, email) {
-        const message = `Hola Sr. Desarrollador de mYpub, el usuario ${name}, con el email ${email}, solicita instrucciones para crear una cuenta de acceso a mYpuB y más cosas sobre la aplicación, Gracias!`;
+    handleWhatsAppHelp() {
+        const name = prompt('Por favor, ingrese su nombre completo:');
+        const phone = prompt('Por favor, ingrese su número de WhatsApp:');
         
-        // En un entorno real, esto se manejaría a través de un servidor
-        const mailtoLink = `mailto:enzemajr@gmail.com?subject=Ayuda mYpuB&body=${encodeURIComponent(message)}`;
-        window.location.href = mailtoLink;
-    }
-
-    async sendWhatsAppHelp(name, phone) {
-        const message = `Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el número ${phone}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación, Gracias!`;
-        
-        // Crear enlace de WhatsApp
-        const whatsappLink = `https://wa.me/240222084663?text=${encodeURIComponent(message)}`;
-        window.open(whatsappLink, '_blank');
+        if (name && phone) {
+            const message = encodeURIComponent(`Hola Sr. Desarrollador de mYpuB, el usuario ${name}, con el número ${phone}, solicita instrucciones para crear una cuenta de acceso a mYpuB y de más cosas sobre la aplicación, Gracias!`);
+            window.open(`https://wa.me/240222084663?text=${message}`, '_blank');
+        }
     }
 }
-
-// Initialize authentication
-const auth = new Auth(db);
