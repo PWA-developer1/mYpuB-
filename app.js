@@ -3,87 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mYpuB - Plataforma para Compartir Medios</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#ffffff">
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    
+    <title>mYpuB - Plataforma de Compartir Medios</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        .auth-title {
+            font-family: Georgia, serif;
+            font-weight: bold;
+        }
         .hidden {
             display: none;
         }
         .media-card {
             margin-bottom: 20px;
         }
-        .media-preview {
-            max-width: 100%;
-            height: auto;
+        .like-counter {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .help-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .section-content {
+            display: none;
+        }
+        .section-content.active {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <!-- Formularios de Autenticación -->
-    <div id="authForms" class="container mt-5">
-        <!-- Formulario de Inicio de Sesión -->
-        <div id="loginForm">
-            <h2>Iniciar Sesión en mYpuB</h2>
-            <form id="login">
-                <div class="mb-3">
-                    <input type="email" class="form-control" id="loginEmail" placeholder="Correo electrónico" required>
-                </div>
-                <div class="mb-3">
-                    <input type="password" class="form-control" id="loginPassword" placeholder="Contraseña" required>
-                </div>
-                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-                <button type="button" class="btn btn-link" id="showRegister">Registrarse</button>
-            </form>
-        </div>
-
-        <!-- Formulario de Registro -->
-        <div id="registerForm" class="hidden">
-            <h2>Crear Cuenta</h2>
-            <form id="register">
-                <div class="mb-3">
-                    <input type="text" class="form-control" id="fullName" placeholder="Nombre completo" required>
-                </div>
-                <div class="mb-3">
-                    <select class="form-select" id="country" required>
-                        <option value="">Seleccionar país</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <div class="input-group">
-                        <span class="input-group-text" id="phonePrefix">+</span>
-                        <input type="tel" class="form-control" id="phone" placeholder="Número de teléfono" required>
+    <!-- Registro -->
+    <div id="registerForm" class="container mt-5">
+        <h2 class="text-center auth-title">Regístrate en mYpuB</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form id="registrationForm" class="p-4 border rounded">
+                    <div class="mb-3">
+                        <label for="fullName" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="fullName" required>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <input type="email" class="form-control" id="registerEmail" placeholder="Correo electrónico" required>
-                </div>
-                <div class="mb-3">
-                    <input type="password" class="form-control" id="registerPassword" 
-                           placeholder="Contraseña (6 letras, 4 números, 2 símbolos)" required>
-                    <div id="passwordHelp" class="form-text">
-                        Debe contener 6 letras (primera mayúscula), 4 números y 2 símbolos (@,#,&)
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo electrónico (Gmail)</label>
+                        <input type="email" class="form-control" id="email" required>
                     </div>
-                </div>
-                <button type="submit" class="btn btn-primary">Registrarse</button>
-                <button type="button" class="btn btn-link" id="showLogin">Volver a Iniciar sesión</button>
-                <button type="button" class="btn btn-info" id="helpButton">Ayuda</button>
-            </form>
+                    <div class="mb-3">
+                        <label class="form-label">Sexo</label>
+                        <select class="form-select" id="gender" required>
+                            <option value="">Seleccione...</option>
+                            <option value="M">Hombre</option>
+                            <option value="F">Mujer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="country" class="form-label">País</label>
+                        <select class="form-select" id="country" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Teléfono</label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="phonePrefix">+</span>
+                            <input type="tel" class="form-control" id="phone" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password" required>
+                        <small class="form-text text-muted">
+                            12 caracteres: 6 letras (primera mayúscula), 4 números, 2 símbolos (@#&)
+                        </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                    <div class="text-center mt-3">
+                        <a href="#" id="goToLogin">¿Ya tienes una cuenta? Inicia sesión</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Aplicación Principal -->
-    <div id="mainApp" class="hidden">
+    <!-- Login -->
+    <div id="loginForm" class="container mt-5 hidden">
+        <h2 class="text-center auth-title">Inicie la sesión en mYpuB</h2>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form id="loginFormElement" class="p-4 border rounded">
+                    <div class="mb-3">
+                        <label for="loginEmail" class="form-label">Correo electrónico</label>
+                        <input type="email" class="form-control" id="loginEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Iniciar sesión</button>
+                    <div class="text-center mt-3">
+                        <a href="#" id="goToRegister">¿No tienes una cuenta? Regístrate</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Principal -->
+    <div id="mainPanel" class="hidden">
         <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-            <div class="container-fluid">
+            <div class="container">
                 <a class="navbar-brand" href="#">mYpuB</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
@@ -91,122 +121,169 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="uploadNav">SUBIR</a>
+                            <a class="nav-link" href="#" data-section="upload">SUBIR TU</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="galleryNav">GALERÍA</a>
-                        </li>
-                        <li class="nav-item developer-only hidden">
-                            <a class="nav-link" href="#" id="userManagementNav">GESTIÓN DE USUARIOS</a>
+                            <a class="nav-link" href="#" data-section="gallery">GALERÍA</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" id="infoNav">INFORMACIÓN</a>
+                            <a class="nav-link" href="#" data-section="share">COMPARTIR</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="userManagement">GESTIÓN DE USUARIOS</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-section="info">INFÓRMATE</a>
                         </li>
                     </ul>
-                    <button class="btn btn-light ms-auto" id="logoutBtn">Cerrar sesión</button>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="logoutBtn">Cerrar sesión</a>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </nav>
 
-        <!-- Secciones de Contenido -->
-        <div class="container mt-4">
-            <!-- Sección de Subida -->
-            <div id="uploadSection" class="section">
-                <h3>Subir Medios</h3>
-                <form id="uploadForm">
-                    <div class="mb-3">
-                        <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
+        <!-- Sección de Subida -->
+        <div id="uploadSection" class="container mt-4 section-content active">
+            <h3>Subir Contenido</h3>
+            <form id="uploadForm">
+                <div class="mb-3">
+                    <input type="file" class="form-control" id="mediaFile" accept="image/*,video/*" required>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="privacy" id="public" value="public" checked>
+                        <label class="form-check-label" for="public">Público</label>
                     </div>
-                    <div class="form-check mb-3">
-                        <input type="checkbox" class="form-check-input" id="isPublic">
-                        <label class="form-check-label" for="isPublic">Hacer público</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="privacy" id="private" value="private">
+                        <label class="form-check-label" for="private">Privado</label>
                     </div>
-                    <button type="submit" class="btn btn-primary">Subir</button>
-                </form>
-            </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Subir</button>
+            </form>
+        </div>
 
-            <!-- Sección de Galería -->
-            <div id="gallerySection" class="section hidden">
-                <h3>Galería</h3>
-                <div id="mediaGrid" class="row"></div>
-            </div>
+        <!-- Sección de Galería -->
+        <div id="gallerySection" class="container mt-4 section-content">
+            <h3>Galería</h3>
+            <div id="mediaGallery" class="row"></div>
+        </div>
 
-            <!-- Sección de Gestión de Usuarios -->
-            <div id="userManagementSection" class="section hidden">
-                <h3>Gestión de Usuarios</h3>
-                <div id="userList" class="list-group"></div>
+        <!-- Sección de Compartir -->
+        <div id="shareSection" class="container mt-4 section-content">
+            <h3>Compartir Archivos</h3>
+            <div class="mb-3">
+                <label for="userSelect" class="form-label">Seleccionar Usuario</label>
+                <select class="form-select" id="userSelect"></select>
             </div>
+            <div class="mb-3">
+                <label for="mediaSelect" class="form-label">Seleccionar Archivo</label>
+                <select class="form-select" id="mediaSelect"></select>
+            </div>
+            <button id="shareBtn" class="btn btn-primary">Compartir</button>
+        </div>
 
-            <!-- Sección de Información -->
-            <div id="infoSection" class="section hidden">
-                <h3>Acerca de mYpuB</h3>
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Información del Desarrollador</h5>
-                        <p><strong>Nombre:</strong> Tarciano ENZEMA NCHAMA</p>
-                        <p><strong>Educación:</strong> Graduado de la Universidad UNGE</p>
-                        <p><strong>Facultad:</strong> Facultad de Economía, Gestión y Administración</p>
-                        <p><strong>Departamento:</strong> Gestión de TI para Negocios</p>
-                        <p><strong>Contacto:</strong> enzemajr@gmail.com</p>
-                        <p><strong>Fecha de Finalización:</strong> 06/07/2025</p>
-                    </div>
+        <!-- Sección de Gestión de Usuarios -->
+        <div id="userManagementSection" class="container mt-4 section-content">
+            <h3>Gestión de Usuarios</h3>
+            <div id="usersList"></div>
+        </div>
+
+        <!-- Sección de Información -->
+        <div id="infoSection" class="container mt-4 section-content">
+            <h3>Información</h3>
+            <div class="card">
+                <div class="card-body">
+                    <h4>Sobre mYpuB</h4>
+                    <p>Una plataforma para compartir imágenes y videos de forma segura y social.</p>
+                    
+                    <h4>Desarrollador</h4>
+                    <ul class="list-unstyled">
+                        <li><strong>Nombre:</strong> Tarciano ENZEMA NCHAMA</li>
+                        <li><strong>Formación:</strong> Finalista universitario de la UNGE</li>
+                        <li><strong>Facultad:</strong> Ciencias económicas gestión y administración</li>
+                        <li><strong>Departamento:</strong> Informática de gestión empresarial</li>
+                        <li><strong>Contacto:</strong> enzemajr@gmail.com</li>
+                        <li><strong>Fecha final del desarrollo:</strong> 06/07/2025</li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Ayuda -->
-    <div class="modal fade" id="helpModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">¿Necesitas Ayuda?</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <button class="btn btn-primary mb-2 w-100" id="whatsappInstructions">
-                        Obtener instrucciones por WhatsApp
-                    </button>
-                    <button class="btn btn-secondary w-100" id="whatsappConsultation">
-                        Solicitar consulta
-                    </button>
-                </div>
+    <!-- Panel de Ayuda -->
+    <div id="helpPanel" class="help-panel">
+        <button class="btn btn-info" id="helpBtn">AYUDA</button>
+        <div id="helpOptions" class="card mt-2 hidden">
+            <div class="card-body">
+                <h5 class="card-title">¿Cómo podemos ayudarte?</h5>
+                <button class="btn btn-outline-primary mb-2 w-100" id="emailHelpBtn">Consulta por Email</button>
+                <button class="btn btn-outline-success w-100" id="whatsappHelpBtn">Consulta por WhatsApp</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Formulario de Contacto por WhatsApp -->
-    <div class="modal fade" id="whatsappModal" tabindex="-1">
+    <!-- Modal de Ayuda por Email -->
+    <div class="modal fade" id="emailHelpModal">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="whatsappModalTitle">Contactar por WhatsApp</h5>
+                    <h5 class="modal-title">Consulta por Email</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="whatsappForm">
+                    <form id="emailHelpForm">
                         <div class="mb-3">
-                            <input type="text" class="form-control" id="whatsappName" placeholder="Nombre completo" required>
+                            <label for="helpName" class="form-label">Nombre completo</label>
+                            <input type="text" class="form-control" id="helpName" required>
                         </div>
                         <div class="mb-3">
-                            <input type="tel" class="form-control" id="whatsappNumber" placeholder="Número de WhatsApp" required>
+                            <label for="helpEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="helpEmail" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">Enviar</button>
+                        <button type="submit" class="btn btn-primary">Enviar Consulta</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap y Dependencias -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script Principal de la Aplicación -->
+    <!-- Modal de Ayuda por WhatsApp -->
+    <div class="modal fade" id="whatsappHelpModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Consulta por WhatsApp</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="whatsappHelpForm">
+                        <div class="mb-3">
+                            <label for="whatsappName" class="form-label">Nombre completo</label>
+                            <input type="text" class="form-control" id="whatsappName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="whatsappNumber" class="form-label">Número de WhatsApp</label>
+                            <input type="tel" class="form-control" id="whatsappNumber" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enviar Consulta</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     <script>
-        // Código para cargar países y manejar el prefijo telefónico
         document.addEventListener('DOMContentLoaded', function() {
-            // Cargar países al select
+            // Initialize country dropdown
             const countrySelect = document.getElementById('country');
+            const phonePrefixSpan = document.getElementById('phonePrefix');
             
             // Lista de países con sus prefijos
             const countries = [
@@ -426,6 +503,92 @@
                 } else {
                     phonePrefix.textContent = '+';
                 }
+            });
+
+            // Toggle between login and register forms
+            document.getElementById('goToLogin').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+            });
+
+            document.getElementById('goToRegister').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+            });
+
+            // Handle registration form submission
+            document.getElementById('registrationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Here you would normally send the data to your backend
+                alert('Registro exitoso! Redirigiendo al panel principal...');
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('mainPanel').classList.remove('hidden');
+            });
+
+            // Handle login form submission
+            document.getElementById('loginFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Here you would normally validate credentials with your backend
+                alert('Inicio de sesión exitoso! Redirigiendo al panel principal...');
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('mainPanel').classList.remove('hidden');
+            });
+
+            // Handle logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('mainPanel').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+            });
+
+            // Navigation between sections in main panel
+            document.querySelectorAll('[data-section]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.getAttribute('data-section');
+                    
+                    // Hide all sections
+                    document.querySelectorAll('.section-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show selected section
+                    document.getElementById(section + 'Section').classList.add('active');
+                });
+            });
+
+            // Help panel functionality
+            document.getElementById('helpBtn').addEventListener('click', function() {
+                document.getElementById('helpOptions').classList.toggle('hidden');
+            });
+
+            // Email help modal
+            document.getElementById('emailHelpBtn').addEventListener('click', function() {
+                const emailModal = new bootstrap.Modal(document.getElementById('emailHelpModal'));
+                emailModal.show();
+            });
+
+            // WhatsApp help modal
+            document.getElementById('whatsappHelpBtn').addEventListener('click', function() {
+                const whatsappModal = new bootstrap.Modal(document.getElementById('whatsappHelpModal'));
+                whatsappModal.show();
+            });
+
+            // Handle help form submissions
+            document.getElementById('emailHelpForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Consulta por email enviada. Nos pondremos en contacto pronto.');
+                const emailModal = bootstrap.Modal.getInstance(document.getElementById('emailHelpModal'));
+                emailModal.hide();
+            });
+
+            document.getElementById('whatsappHelpForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Consulta por WhatsApp enviada. Nos pondremos en contacto pronto.');
+                const whatsappModal = bootstrap.Modal.getInstance(document.getElementById('whatsappHelpModal'));
+                whatsappModal.hide();
             });
         });
     </script>
