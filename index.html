@@ -9,7 +9,83 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        /* Estilos personalizados mínimos necesarios */
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #a29bfe;
+            --dark-color: #2d3436;
+            --light-color: #f5f6fa;
+            --success-color: #00b894;
+            --danger-color: #d63031;
+            --warning-color: #fdcb6e;
+            --info-color: #0984e3;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .auth-container {
+            max-width: 600px;
+            margin: 5rem auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .auth-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .auth-body {
+            background-color: white;
+            padding: 2rem;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(108, 92, 231, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a4bd1;
+            border-color: #5a4bd1;
+        }
+        
+        .help-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            width: 90%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        
+        .help-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+        
         .password-strength {
             height: 5px;
             margin-top: 5px;
@@ -17,14 +93,78 @@
             transition: all 0.3s ease;
         }
         
-        .strength-0 { width: 0%; background-color: #dc3545; }
-        .strength-1 { width: 25%; background-color: #ff7675; }
-        .strength-2 { width: 50%; background-color: #ffc107; }
-        .strength-3 { width: 75%; background-color: #55efc4; }
-        .strength-4 { width: 100%; background-color: #28a745; }
+        .strength-0 {
+            width: 0%;
+            background-color: var(--danger-color);
+        }
         
+        .strength-1 {
+            width: 25%;
+            background-color: #ff7675;
+        }
+        
+        .strength-2 {
+            width: 50%;
+            background-color: #fdcb6e;
+        }
+        
+        .strength-3 {
+            width: 75%;
+            background-color: #55efc4;
+        }
+        
+        .strength-4 {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+        
+        .country-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        /* Panel principal oculto inicialmente */
+        #mainPanel {
+            display: none;
+        }
+        
+        /* Estilos para la barra de navegación */
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* Estilos para las tarjetas de archivos */
         .file-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
         
         .file-card:hover {
@@ -39,6 +179,10 @@
             border-radius: 5px 5px 0 0;
         }
         
+        .video-thumbnail {
+            position: relative;
+        }
+        
         .video-play-icon {
             position: absolute;
             top: 50%;
@@ -49,57 +193,48 @@
             opacity: 0.8;
         }
         
+        .file-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .like-count {
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        /* Dropzone para subir archivos */
         .dropzone {
-            border: 2px dashed #dee2e6;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
         
         .dropzone:hover {
-            border-color: #0d6efd;
-            background-color: rgba(13, 110, 253, 0.05);
+            border-color: var(--primary-color);
+            background-color: rgba(108, 92, 231, 0.05);
         }
         
         .dropzone.active {
-            border-color: #198754;
-            background-color: rgba(25, 135, 84, 0.05);
+            border-color: var(--success-color);
+            background-color: rgba(0, 184, 148, 0.05);
         }
         
+        /* Pestañas del panel principal */
         .module-tab {
             display: none;
         }
         
         .module-tab.active {
             display: block;
-            animation: fadeIn 0.3s ease-in-out;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .auth-container {
-            max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .auth-header {
-            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #a29bfe;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .help-panel, .share-modal {
+        /* Estilos para el modal de compartir */
+        .share-modal {
             display: none;
             position: fixed;
             top: 50%;
@@ -108,9 +243,13 @@
             z-index: 1050;
             width: 90%;
             max-width: 500px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
         }
         
-        .help-overlay, .share-overlay {
+        .share-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -121,114 +260,115 @@
             z-index: 1040;
         }
         
+        /* Estilos para la sección de información */
         .info-card {
-            border-left: 4px solid #6c5ce7;
+            border-left: 4px solid var(--primary-color);
         }
         
         .developer-info {
             background-color: rgba(108, 92, 231, 0.1);
+            border-radius: 5px;
+            padding: 15px;
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
     <!-- Panel de Autenticación -->
     <div id="authPanel">
-        <div class="container d-flex align-items-center justify-content-center min-vh-100">
-            <div class="auth-container card overflow-hidden fade-in">
-                <div class="auth-header text-white p-4 text-center">
-                    <h1 class="mb-0"><i class="bi bi-cloud-arrow-up"></i> mYpuB</h1>
-                    <p class="mb-0">Sube y comparte tus imágenes y videos</p>
-                </div>
-                <div class="card-body p-4">
-                    <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Iniciar Sesión</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrarse</button>
-                        </li>
-                    </ul>
+        <div class="auth-container fade-in">
+            <div class="auth-header">
+                <h1><i class="bi bi-cloud-arrow-up"></i> mYpuB</h1>
+                <p class="mb-0">Sube y comparte tus imágenes y videos</p>
+            </div>
+            <div class="auth-body">
+                <ul class="nav nav-tabs mb-4" id="authTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Iniciar Sesión</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab">Registrarse</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="authTabsContent">
+                    <!-- Formulario de Login -->
+                    <div class="tab-pane fade show active" id="login" role="tabpanel">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label">Correo electrónico</label>
+                                <input type="email" class="form-control" id="loginEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                            </div>
+                        </form>
+                    </div>
                     
-                    <div class="tab-content" id="authTabsContent">
-                        <!-- Formulario de Login -->
-                        <div class="tab-pane fade show active" id="login" role="tabpanel">
-                            <form id="loginForm">
-                                <div class="mb-3">
-                                    <label for="loginEmail" class="form-label">Correo electrónico</label>
-                                    <input type="email" class="form-control" id="loginEmail" required>
+                    <!-- Formulario de Registro -->
+                    <div class="tab-pane fade" id="register" role="tabpanel">
+                        <form id="registerForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fullName" class="form-label">Nombre completo</label>
+                                    <input type="text" class="form-control" id="fullName" required>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="loginPassword" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="loginPassword" required>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Correo electrónico (Gmail)</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                    <div class="invalid-feedback">Debe ser una dirección de Gmail válida.</div>
                                 </div>
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="gender" class="form-label">Sexo</label>
+                                    <select class="form-select" id="gender" required>
+                                        <option value="" selected disabled>Seleccionar...</option>
+                                        <option value="male">Hombre</option>
+                                        <option value="female">Mujer</option>
+                                    </select>
                                 </div>
-                            </form>
-                        </div>
-                        
-                        <!-- Formulario de Registro -->
-                        <div class="tab-pane fade" id="register" role="tabpanel">
-                            <form id="registerForm">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="fullName" class="form-label">Nombre completo</label>
-                                        <input type="text" class="form-control" id="fullName" required>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="email" class="form-label">Correo electrónico (Gmail)</label>
-                                        <input type="email" class="form-control" id="email" required>
-                                        <div class="invalid-feedback">Debe ser una dirección de Gmail válida.</div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="country" class="form-label">País</label>
+                                    <select class="form-select" id="country" required>
+                                        <option value="" selected disabled>Cargando países...</option>
+                                    </select>
                                 </div>
-                                
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="gender" class="form-label">Sexo</label>
-                                        <select class="form-select" id="gender" required>
-                                            <option value="" selected disabled>Seleccionar...</option>
-                                            <option value="male">Hombre</option>
-                                            <option value="female">Mujer</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label for="country" class="form-label">País</label>
-                                        <select class="form-select" id="country" required>
-                                            <option value="" selected disabled>Cargando países...</option>
-                                        </select>
-                                    </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Teléfono</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="phonePrefix">+</span>
+                                    <input type="tel" class="form-control" id="phone" aria-describedby="phonePrefix" required>
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label for="phone" class="form-label">Teléfono</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text" id="phonePrefix">+</span>
-                                        <input type="tel" class="form-control" id="phone" aria-describedby="phonePrefix" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="password" required>
-                                    <div class="password-strength strength-0" id="passwordStrength"></div>
-                                    <small class="text-muted">Debe tener 12 caracteres: 6 letras (primera mayúscula), 4 números y 2 símbolos (@#&).</small>
-                                    <div class="invalid-feedback">La contraseña no cumple con los requisitos.</div>
-                                </div>
-                                
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="termsCheck" required>
-                                    <label class="form-check-label" for="termsCheck">Acepto los términos y condiciones</label>
-                                </div>
-                                
-                                <div class="d-grid gap-2 mb-3">
-                                    <button type="submit" class="btn btn-primary">Registrarse</button>
-                                </div>
-                                
-                                <div class="text-center">
-                                    <button type="button" class="btn btn-link" id="helpBtn">Ayuda <i class="bi bi-question-circle"></i></button>
-                                </div>
-                            </form>
-                        </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="password" required>
+                                <div class="password-strength strength-0" id="passwordStrength"></div>
+                                <small class="text-muted">Debe tener 12 caracteres: 6 letras (primera mayúscula), 4 números y 2 símbolos (@#&).</small>
+                                <div class="invalid-feedback">La contraseña no cumple con los requisitos.</div>
+                            </div>
+                            
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">Acepto los términos y condiciones</label>
+                            </div>
+                            
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary">Registrarse</button>
+                            </div>
+                            
+                            <div class="text-center">
+                                <button type="button" class="btn btn-link" id="helpBtn">Ayuda <i class="bi bi-question-circle"></i></button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -237,59 +377,57 @@
     
     <!-- Panel de Ayuda -->
     <div class="help-overlay" id="helpOverlay"></div>
-    <div class="help-panel card" id="helpPanel">
-        <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="help-panel" id="helpPanel">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">Ayuda y Soporte</h5>
             <button type="button" class="btn-close" id="closeHelpBtn"></button>
         </div>
-        <div class="card-body">
-            <ul class="nav nav-tabs mb-3" id="helpTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#emailHelp" type="button" role="tab">Email</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsappHelp" type="button" role="tab">WhatsApp</button>
-                </li>
-            </ul>
+        <ul class="nav nav-tabs mb-3" id="helpTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="email-tab" data-bs-toggle="tab" data-bs-target="#emailHelp" type="button" role="tab">Email</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="whatsapp-tab" data-bs-toggle="tab" data-bs-target="#whatsappHelp" type="button" role="tab">WhatsApp</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="helpTabsContent">
+            <div class="tab-pane fade show active" id="emailHelp" role="tabpanel">
+                <form id="emailHelpForm">
+                    <div class="mb-3">
+                        <label for="helpName" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="helpName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="helpEmail" class="form-label">Correo para respuesta</label>
+                        <input type="email" class="form-control" id="helpEmail" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Enviar consulta por Email</button>
+                    </div>
+                </form>
+            </div>
             
-            <div class="tab-content" id="helpTabsContent">
-                <div class="tab-pane fade show active" id="emailHelp" role="tabpanel">
-                    <form id="emailHelpForm">
-                        <div class="mb-3">
-                            <label for="helpName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="helpName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="helpEmail" class="form-label">Correo para respuesta</label>
-                            <input type="email" class="form-control" id="helpEmail" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Enviar consulta por Email</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <div class="tab-pane fade" id="whatsappHelp" role="tabpanel">
-                    <form id="whatsappHelpForm">
-                        <div class="mb-3">
-                            <label for="helpWhatsappName" class="form-label">Nombre completo</label>
-                            <input type="text" class="form-control" id="helpWhatsappName" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="helpWhatsappNumber" class="form-label">Número de WhatsApp</label>
-                            <input type="tel" class="form-control" id="helpWhatsappNumber" required>
-                        </div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success">Enviar consulta por WhatsApp</button>
-                        </div>
-                    </form>
-                </div>
+            <div class="tab-pane fade" id="whatsappHelp" role="tabpanel">
+                <form id="whatsappHelpForm">
+                    <div class="mb-3">
+                        <label for="helpWhatsappName" class="form-label">Nombre completo</label>
+                        <input type="text" class="form-control" id="helpWhatsappName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="helpWhatsappNumber" class="form-label">Número de WhatsApp</label>
+                        <input type="tel" class="form-control" id="helpWhatsappNumber" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Enviar consulta por WhatsApp</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
     
     <!-- Panel Principal (oculto inicialmente) -->
-    <div id="mainPanel" class="d-none">
+    <div id="mainPanel">
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
                 <a class="navbar-brand" href="#"><i class="bi bi-cloud-arrow-up"></i> mYpuB</a>
@@ -323,19 +461,18 @@
         </nav>
         
         <div class="container mt-4">
-            <div class="alert alert-success alert-dismissible fade show" role="alert" id="welcomeAlert">
-                <i class="bi bi-check-circle-fill me-2"></i> <span id="welcomeMessage">Bienvenido a mYpuB</span>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="alert alert-success fade show" role="alert" id="welcomeAlert">
+                <i class="bi bi-check-circle-fill"></i> <span id="welcomeMessage">Bienvenido a mYpuB</span>
             </div>
             
             <!-- Módulo de Subir -->
             <div class="module-tab active" id="uploadModule">
                 <div class="row">
-                    <div class="col-lg-8 mx-auto">
-                        <div class="card shadow-sm">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-upload me-2"></i>Subir archivos</h5>
-                                <p class="card-text text-muted">Selecciona imágenes o videos para compartir con la comunidad.</p>
+                                <h5 class="card-title"><i class="bi bi-upload"></i> Subir archivos</h5>
+                                <p class="card-text">Selecciona imágenes o videos para compartir con la comunidad.</p>
                                 <div class="dropzone border rounded p-5 mb-3 text-center" id="uploadDropzone">
                                     <i class="bi bi-cloud-arrow-up display-4 text-muted mb-3"></i>
                                     <p>Arrastra tus archivos aquí o haz clic para seleccionarlos</p>
@@ -353,14 +490,12 @@
                                     <label for="fileDescription" class="form-label">Descripción (opcional):</label>
                                     <textarea class="form-control" id="fileDescription" rows="2"></textarea>
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-primary" id="selectFilesBtn"><i class="bi bi-folder2-open me-2"></i>Seleccionar archivos</button>
-                                    <button class="btn btn-success" id="uploadFilesBtn" disabled><i class="bi bi-cloud-upload me-2"></i>Subir archivos</button>
-                                </div>
+                                <button class="btn btn-primary" id="selectFilesBtn"><i class="bi bi-folder2-open"></i> Seleccionar archivos</button>
+                                <button class="btn btn-success" id="uploadFilesBtn" disabled><i class="bi bi-cloud-upload"></i> Subir archivos</button>
                                 <div class="progress mt-3" id="uploadProgress" style="display: none; height: 20px;">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                                 </div>
-                                <div id="uploadStatus" class="mt-2 small text-muted"></div>
+                                <div id="uploadStatus" class="mt-2 small"></div>
                             </div>
                         </div>
                     </div>
@@ -371,9 +506,9 @@
             <div class="module-tab" id="galleryModule">
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <h4><i class="bi bi-images me-2"></i>Galería de archivos</h4>
+                        <h4><i class="bi bi-images"></i> Galería de archivos</h4>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 text-end">
                         <div class="input-group">
                             <input type="text" class="form-control" id="gallerySearch" placeholder="Buscar archivos...">
                             <button class="btn btn-outline-secondary" type="button" id="searchBtn"><i class="bi bi-search"></i></button>
@@ -394,11 +529,11 @@
             <!-- Módulo de Compartir -->
             <div class="module-tab" id="shareModule">
                 <div class="row">
-                    <div class="col-lg-8 mx-auto">
-                        <div class="card shadow-sm">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-share me-2"></i>Compartir archivos</h5>
-                                <p class="card-text text-muted">Selecciona un usuario y un archivo para compartir.</p>
+                                <h5 class="card-title"><i class="bi bi-share"></i> Compartir archivos</h5>
+                                <p class="card-text">Selecciona un usuario y un archivo para compartir.</p>
                                 
                                 <div class="mb-3">
                                     <label for="shareUser" class="form-label">Usuario a compartir:</label>
@@ -419,13 +554,13 @@
                                     <textarea class="form-control" id="shareMessage" rows="2"></textarea>
                                 </div>
                                 
-                                <button class="btn btn-primary" id="shareBtn" disabled><i class="bi bi-send me-2"></i>Compartir archivo</button>
+                                <button class="btn btn-primary" id="shareBtn" disabled><i class="bi bi-send"></i> Compartir archivo</button>
                             </div>
                         </div>
                         
-                        <div class="card shadow-sm mt-4">
+                        <div class="card mt-4">
                             <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-collection me-2"></i>Archivos compartidos contigo</h5>
+                                <h5 class="card-title"><i class="bi bi-collection"></i> Archivos compartidos contigo</h5>
                                 <div class="table-responsive">
                                     <table class="table table-hover" id="sharedFilesTable">
                                         <thead>
@@ -457,10 +592,10 @@
             <div class="module-tab" id="usersModule">
                 <div class="row">
                     <div class="col-12">
-                        <div class="card shadow-sm">
+                        <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-people me-2"></i>Gestión de Usuarios</h5>
-                                <p class="card-text text-muted">Aquí puedes gestionar los usuarios del sistema.</p>
+                                <h5 class="card-title"><i class="bi bi-people"></i> Gestión de Usuarios</h5>
+                                <p class="card-text">Aquí puedes gestionar los usuarios del sistema.</p>
                                 
                                 <div class="table-responsive">
                                     <table class="table table-hover" id="usersTable">
@@ -494,14 +629,14 @@
             <!-- Módulo de Información -->
             <div class="module-tab" id="infoModule">
                 <div class="row">
-                    <div class="col-lg-8 mx-auto">
-                        <div class="card info-card shadow-sm">
+                    <div class="col-md-8 mx-auto">
+                        <div class="card info-card">
                             <div class="card-body">
-                                <h5 class="card-title"><i class="bi bi-info-circle me-2"></i>Acerca de mYpuB</h5>
+                                <h5 class="card-title"><i class="bi bi-info-circle"></i> Acerca de mYpuB</h5>
                                 <p class="card-text">mYpuB es una plataforma para compartir imágenes y videos con otros usuarios de manera sencilla y segura.</p>
                                 
-                                <h6 class="mt-4"><i class="bi bi-question-circle me-2"></i>¿Cómo funciona?</h6>
-                                <ul class="mb-4">
+                                <h6 class="mt-4"><i class="bi bi-question-circle"></i> ¿Cómo funciona?</h6>
+                                <ul>
                                     <li>Sube tus imágenes o videos desde el módulo "Subir"</li>
                                     <li>Elige si quieres que sean públicos o privados</li>
                                     <li>Explora la galería para ver lo que otros han compartido</li>
@@ -509,8 +644,8 @@
                                     <li>Comparte archivos específicos con otros usuarios</li>
                                 </ul>
                                 
-                                <div class="developer-info p-3 rounded mb-4">
-                                    <h6><i class="bi bi-person me-2"></i>Información del desarrollador</h6>
+                                <div class="developer-info mt-4">
+                                    <h6><i class="bi bi-person"></i> Información del desarrollador</h6>
                                     <ul class="list-unstyled">
                                         <li><strong>Nombre completo:</strong> Tarciano ENZEMA NCHAMA</li>
                                         <li><strong>Formación académica:</strong> Finalista universitario de la UNGE</li>
@@ -519,13 +654,6 @@
                                         <li><strong>Contacto:</strong> enzemajr@gmail.com</li>
                                         <li><strong>Fecha final del desarrollo:</strong> 06/07/2025</li>
                                     </ul>
-                                </div>
-                                
-                                <div class="alert alert-info">
-                                    <h6><i class="bi bi-info-circle me-2"></i>Información técnica</h6>
-                                    <p class="mb-1"><strong>Versión:</strong> 2.0.0</p>
-                                    <p class="mb-1"><strong>Tecnologías:</strong> HTML5, CSS3, JavaScript, IndexedDB</p>
-                                    <p class="mb-0"><strong>Última actualización:</strong> ${new Date().toLocaleDateString()}</p>
                                 </div>
                             </div>
                         </div>
@@ -598,6 +726,6 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Nuestro archivo JS -->
-    <script src="app.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>
