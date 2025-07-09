@@ -5,15 +5,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedFiles = [];
     let currentFileView = null;
     let currentAction = null;
-    let currentFolder = null;
-    let videoPlayers = {};
     
     // Inicializar componentes de Bootstrap
     const toastEl = document.getElementById('toast');
     const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
     const fileModal = new bootstrap.Modal(document.getElementById('fileModal'));
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-    const folderModal = new bootstrap.Modal(document.getElementById('folderModal'));
     
     // Mostrar mensaje toast
     function showToast(title, message, isError = false) {
@@ -218,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {name: "Togo", prefix: "+228"},
             {name: "Tonga", prefix: "+676"},
             {name: "Trinidad y Tobago", prefix: "+1-868"},
-            {name: "Túnis", prefix: "+216"},
+            {name: "Túnez", prefix: "+216"},
             {name: "Turkmenistán", prefix: "+993"},
             {name: "Turquía", prefix: "+90"},
             {name: "Tuvalu", prefix: "+688"},
@@ -278,22 +275,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 password: document.getElementById('password').value,
                 isDeveloper: document.getElementById('password').value === 'Mpteen2025@&',
                 createdAt: new Date().toISOString(),
-                isActive: true,
-                folders: [] // Carpetas del usuario
+                isActive: true
             };
             
             // Registrar usuario en IndexedDB
             registerUser(user)
                 .then(() => {
-                    // Crear carpeta por defecto
-                    return createFolder(user.email, 'Mi Carpeta', 'private');
-                })
-                .then(() => {
                     // Iniciar sesión automáticamente
-                    return loginUser(user.email, user.password);
-                })
-                .then(user => {
-                    showMainPanel(user);
+                    loginUser(user.email, user.password)
+                        .then(user => {
+                            showMainPanel(user);
+                        })
+                        .catch(error => {
+                            showToast('Error', 'Error al iniciar sesión después del registro', true);
+                        });
                 })
                 .catch(error => {
                     showToast('Error', 'Error al registrar el usuario: ' + error, true);
@@ -506,59 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmModal.hide();
     });
     
-    // Manejar creación de carpeta
-    const createFolderBtn = document.getElementById('createFolderBtn');
-    createFolderBtn.addEventListener('click', function() {
-        showCreateFolderModal();
-    });
-    
-    // Manejar formulario de creación de carpeta
-    const folderForm = document.getElementById('folderForm');
-    folderForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const folderName = document.getElementById('folderName').value;
-        const folderVisibility = document.getElementById('folderVisibility').value;
-        
-        createFolder(currentUser.email, folderName, folderVisibility)
-            .then(() => {
-                showToast('Éxito', 'Carpeta creada correctamente');
-                folderModal.hide();
-                loadUserFolders();
-            })
-            .catch(error => {
-                showToast('Error', 'No se pudo crear la carpeta: ' + error, true);
-            });
-    });
-    
-    // Manejar controles de video
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('video-control')) {
-            const videoId = e.target.closest('.video-container').dataset.videoId;
-            const video = document.getElementById(`video-${videoId}`);
-            
-            if (!video) return;
-            
-            switch(e.target.dataset.action) {
-                case 'play':
-                    video.play();
-                    break;
-                case 'pause':
-                    video.pause();
-                    break;
-                case 'stop':
-                    video.pause();
-                    video.currentTime = 0;
-                    break;
-                case 'prev':
-                    video.currentTime = Math.max(0, video.currentTime - 5);
-                    break;
-                case 'next':
-                    video.currentTime = Math.min(video.duration, video.currentTime + 5);
-                    break;
-            }
-        }
-    });
-    
     // Actualizar prefijo telefónico según país seleccionado
     function updatePhonePrefix() {
         const countrySelect = document.getElementById('country');
@@ -743,13 +685,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 uploadFilesBtn.disabled = true;
                 document.getElementById('uploadStatus').textContent = '';
                 document.getElementById('uploadProgress').style.display = 'none';
-                // Cargar carpetas del usuario
-                loadUserFolders();
                 break;
                 
             case 'gallery':
                 loadGalleryFiles();
-                loadUserFolders();
                 break;
                 
             case 'share':
@@ -765,196 +704,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
                 
             case 'info':
-                updateInfoModule();
+                // No necesita carga adicional
                 break;
         }
-    }
-    
-    // Actualizar módulo de información
-    function updateInfoModule() {
-        const infoContent = document.getElementById('infoContent');
-        
-        infoContent.innerHTML = `
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Información sobre mYpuB</h5>
-                    <p class="card-text">
-                        mYpuB es una aplicación web para almacenar y compartir imágenes y videos de manera segura.
-                    </p>
-                    <h6>Funcionalidades principales:</h6>
-                    <ul>
-                        <li><strong>Subida de archivos:</strong> Puedes subir múltiples imágenes o videos a la vez.</li>
-                        <li><strong>Galería personal:</strong> Organiza tus archivos en carpetas con diferentes niveles de privacidad.</li>
-                        <li><strong>Compartir archivos:</strong> Comparte tus archivos con otros usuarios de la plataforma.</li>
-                        <li><strong>Reproductor multimedia:</strong> Visualiza videos con controles completos (play, pause, stop, adelantar, retroceder).</li>
-                        <li><strong>Seguridad:</strong> Tus archivos están protegidos y solo son accesibles según la configuración de privacidad que establezcas.</li>
-                    </ul>
-                    <h6>Desarrollador:</h6>
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                EM
-                            </div>
-                        </div>
-                        <div>
-                            <p class="mb-0"><strong>Enrique Martínez</strong></p>
-                            <p class="mb-0 small text-muted">Desarrollador Full Stack</p>
-                            <p class="mb-0 small">Contacto: <a href="mailto:enzemajr@gmail.com">enzemajr@gmail.com</a></p>
-                            <p class="mb-0 small">WhatsApp: <a href="https://wa.me/+240222084663">+240 222 084 663</a></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    // Mostrar modal para crear carpeta
-    function showCreateFolderModal() {
-        document.getElementById('folderName').value = '';
-        document.getElementById('folderVisibility').value = 'private';
-        folderModal.show();
-    }
-    
-    // Cargar carpetas del usuario
-    function loadUserFolders() {
-        const folderSelect = document.getElementById('fileFolder');
-        const folderList = document.getElementById('folderList');
-        
-        folderSelect.innerHTML = '<option value="" selected disabled>Cargando carpetas...</option>';
-        folderList.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>';
-        
-        getUserFolders(currentUser.email)
-            .then(folders => {
-                if (folders.length === 0) {
-                    folderSelect.innerHTML = '<option value="" selected disabled>No tienes carpetas</option>';
-                    folderList.innerHTML = '<div class="text-center py-3"><i class="bi bi-folder-x text-muted"></i><p class="mt-2">No tienes carpetas</p></div>';
-                    return;
-                }
-                
-                // Actualizar selector de carpetas
-                folderSelect.innerHTML = `
-                    <option value="" selected disabled>Selecciona una carpeta</option>
-                    ${folders.map(folder => `
-                        <option value="${folder.id}">${folder.name} (${folder.visibility === 'public' ? 'Pública' : 'Privada'})</option>
-                    `).join('')}
-                `;
-                
-                // Actualizar lista de carpetas
-                folderList.innerHTML = '';
-                folders.forEach(folder => {
-                    const folderElement = document.createElement('div');
-                    folderElement.className = 'folder-item';
-                    folderElement.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-center p-2 border rounded mb-2">
-                            <div>
-                                <i class="bi bi-folder-fill text-warning me-2"></i>
-                                <span>${folder.name}</span>
-                                <span class="badge ${folder.visibility === 'public' ? 'bg-success' : 'bg-secondary'} ms-2">
-                                    ${folder.visibility === 'public' ? 'Pública' : 'Privada'}
-                                </span>
-                            </div>
-                            <div>
-                                <button class="btn btn-sm btn-outline-primary me-1 view-folder-btn" data-folder-id="${folder.id}">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger delete-folder-btn" data-folder-id="${folder.id}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    folderList.appendChild(folderElement);
-                });
-                
-                // Agregar event listeners
-                document.querySelectorAll('.view-folder-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        viewFolderContent(this.dataset.folderId);
-                    });
-                });
-                
-                document.querySelectorAll('.delete-folder-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        showConfirmModal(
-                            'Eliminar carpeta',
-                            '¿Estás seguro de que deseas eliminar esta carpeta y todo su contenido?',
-                            () => deleteFolder(this.dataset.folderId)
-                        );
-                    });
-                });
-            })
-            .catch(error => {
-                console.error('Error al cargar carpetas:', error);
-                folderSelect.innerHTML = '<option value="" selected disabled>Error al cargar carpetas</option>';
-                folderList.innerHTML = '<div class="text-center py-3"><i class="bi bi-exclamation-triangle text-danger"></i><p class="mt-2">Error al cargar carpetas</p></div>';
-            });
-    }
-    
-    // Ver contenido de una carpeta
-    function viewFolderContent(folderId) {
-        currentFolder = folderId;
-        loadGalleryFiles();
-    }
-    
-    // Crear una nueva carpeta
-    function createFolder(userEmail, folderName, visibility) {
-        return new Promise((resolve, reject) => {
-            if (!folderName || !visibility) {
-                reject('Nombre y visibilidad son requeridos');
-                return;
-            }
-            
-            getUserByEmail(userEmail)
-                .then(user => {
-                    const folder = {
-                        id: Date.now().toString(),
-                        name: folderName,
-                        visibility: visibility,
-                        owner: userEmail,
-                        createdAt: new Date().toISOString()
-                    };
-                    
-                    // Agregar carpeta al usuario
-                    const updatedFolders = [...(user.folders || []), folder];
-                    return updateUser(userEmail, { folders: updatedFolders });
-                })
-                .then(() => resolve())
-                .catch(error => reject(error));
-        });
-    }
-    
-    // Eliminar una carpeta
-    function deleteFolder(folderId) {
-        return new Promise((resolve, reject) => {
-            getUserByEmail(currentUser.email)
-                .then(user => {
-                    // Filtrar la carpeta a eliminar
-                    const updatedFolders = user.folders.filter(f => f.id !== folderId);
-                    return updateUser(currentUser.email, { folders: updatedFolders });
-                })
-                .then(() => {
-                    // Eliminar archivos de la carpeta
-                    return getUserFiles(currentUser.email);
-                })
-                .then(files => {
-                    const filesInFolder = files.filter(f => f.folderId === folderId);
-                    const deletePromises = filesInFolder.map(file => deleteFileFromDB(file.id));
-                    return Promise.all(deletePromises);
-                })
-                .then(() => {
-                    resolve();
-                    loadUserFolders();
-                    if (currentFolder === folderId) {
-                        currentFolder = null;
-                        loadGalleryFiles();
-                    }
-                    showToast('Éxito', 'Carpeta eliminada correctamente');
-                })
-                .catch(error => {
-                    reject(error);
-                    showToast('Error', 'No se pudo eliminar la carpeta', true);
-                });
-        });
     }
     
     // Manejar selección de archivos
@@ -985,12 +737,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const visibility = document.getElementById('fileVisibility').value;
         const description = document.getElementById('fileDescription').value;
-        const folderId = document.getElementById('fileFolder').value;
-        
-        if (!folderId) {
-            showToast('Error', 'Debes seleccionar una carpeta para subir los archivos', true);
-            return;
-        }
         
         const progressBar = document.getElementById('uploadProgress').querySelector('.progress-bar');
         document.getElementById('uploadProgress').style.display = 'block';
@@ -1014,8 +760,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     uploadDate: new Date().toISOString(),
                     likes: [],
                     downloads: 0,
-                    sharedWith: [],
-                    folderId: folderId
+                    sharedWith: []
                 };
                 
                 saveFile(fileData)
@@ -1073,18 +818,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     );
                 }
                 
-                // Filtrar por carpeta si está seleccionada
-                if (currentFolder) {
-                    files = files.filter(file => file.folderId === currentFolder);
-                } else {
-                    // Mostrar archivos sin carpeta o en carpetas públicas del usuario
-                    files = files.filter(file => 
-                        !file.folderId || 
-                        (file.userEmail === currentUser.email) ||
-                        (file.visibility === 'public')
-                    );
-                }
-                
                 // Ordenar por fecha más reciente
                 files.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
                 
@@ -1093,16 +826,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-12 text-center py-5">
                             <i class="bi bi-folder-x display-4 text-muted"></i>
                             <p class="mt-3">No se encontraron archivos</p>
-                            ${currentFolder ? '<button class="btn btn-primary mt-2" id="backToFoldersBtn">Volver a carpetas</button>' : ''}
                         </div>
                     `;
-                    
-                    if (currentFolder) {
-                        document.getElementById('backToFoldersBtn').addEventListener('click', function() {
-                            currentFolder = null;
-                            loadGalleryFiles();
-                        });
-                    }
                     return;
                 }
                 
@@ -1110,9 +835,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 files.forEach(file => {
                     // Solo mostrar archivos públicos o del usuario actual
-                    if (file.visibility === 'public' || file.userEmail === currentUser.email || file.sharedWith.includes(currentUser.email)) {
+                    if (file.visibility === 'public' || file.userEmail === currentUser.email) {
                         const col = document.createElement('div');
-                        col.className = 'col-md-4 col-sm-6 mb-4';
+                        col.className = 'col-md-4 col-sm-6';
                         
                         const card = document.createElement('div');
                         card.className = 'card file-card h-100';
@@ -1122,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             thumbnailContent = `<img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">`;
                         } else {
                             thumbnailContent = `
-                                <div class="video-thumbnail position-relative">
+                                <div class="video-thumbnail">
                                     <img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">
                                     <i class="bi bi-play-circle video-play-icon"></i>
                                 </div>
@@ -1131,21 +856,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         const isLiked = file.likes.includes(currentUser.email);
                         const isOwner = file.userEmail === currentUser.email;
-                        const folderInfo = file.folderId ? `<small class="d-block text-muted">Carpeta: ${getFolderNameById(file.folderId) || 'Sin nombre'}</small>` : '';
                         
                         card.innerHTML = `
                             ${thumbnailContent}
                             <div class="card-body">
                                 <h6 class="card-title">${file.name}</h6>
-                                ${folderInfo}
                                 <p class="card-text small text-muted">Subido por: ${file.userName}</p>
                                 <p class="card-text small text-muted">${new Date(file.uploadDate).toLocaleString()}</p>
-                                <div class="file-actions d-flex justify-content-between align-items-center">
+                                <div class="file-actions">
                                     <div>
                                         <button class="btn btn-sm ${isLiked ? 'btn-primary' : 'btn-outline-primary'} like-btn" data-file-id="${file.id}">
                                             <i class="bi bi-hand-thumbs-up"></i> ${file.likes.length}
                                         </button>
-                                        ${(file.visibility === 'public' || isOwner) ? `
+                                        ${file.visibility === 'public' ? `
                                             <button class="btn btn-sm btn-outline-success download-btn ms-2" data-file-id="${file.id}">
                                                 <i class="bi bi-download"></i>
                                             </button>
@@ -1210,13 +933,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
     
-    // Obtener nombre de carpeta por ID
-    function getFolderNameById(folderId) {
-        if (!currentUser.folders) return null;
-        const folder = currentUser.folders.find(f => f.id === folderId);
-        return folder ? folder.name : null;
-    }
-    
     // Ver archivo en modal
     function viewFile(fileId) {
         getFileById(fileId)
@@ -1229,34 +945,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fileOwner = document.getElementById('fileOwner');
                 const fileDate = document.getElementById('fileDate');
                 const deleteBtn = document.getElementById('deleteBtn');
-                const videoControls = document.getElementById('videoControls');
-                const imageControls = document.getElementById('imageControls');
                 
                 modalTitle.textContent = file.name;
                 
                 if (file.type === 'image') {
-                    modalContent.innerHTML = `
-                        <div class="image-viewer">
-                            <img src="data:image/jpeg;base64,${file.data}" class="img-fluid" alt="${file.name}" id="image-${file.id}">
-                        </div>
-                    `;
-                    videoControls.style.display = 'none';
-                    imageControls.style.display = 'flex';
+                    modalContent.innerHTML = `<img src="data:image/jpeg;base64,${file.data}" class="img-fluid" alt="${file.name}">`;
                 } else {
                     modalContent.innerHTML = `
-                        <div class="video-container" data-video-id="${file.id}">
-                            <video controls class="w-100" id="video-${file.id}">
-                                <source src="data:video/mp4;base64,${file.data}" type="video/mp4">
-                                Tu navegador no soporta el elemento de video.
-                            </video>
-                        </div>
+                        <video controls class="w-100">
+                            <source src="data:video/mp4;base64,${file.data}" type="video/mp4">
+                            Tu navegador no soporta el elemento de video.
+                        </video>
                     `;
-                    videoControls.style.display = 'flex';
-                    imageControls.style.display = 'none';
-                    
-                    // Guardar referencia al reproductor de video
-                    const video = document.getElementById(`video-${file.id}`);
-                    videoPlayers[file.id] = video;
                 }
                 
                 likesCount.textContent = file.likes.length;
@@ -1271,7 +971,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 likeBtn.className = isLiked ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
                 
                 // Mostrar botón de descarga solo si es público o el usuario es el propietario
-                downloadBtn.style.display = (file.visibility === 'public' || file.userEmail === currentUser.email || file.sharedWith.includes(currentUser.email)) ? 'block' : 'none';
+                downloadBtn.style.display = (file.visibility === 'public' || file.userEmail === currentUser.email) ? 'block' : 'none';
                 
                 fileModal.show();
             })
@@ -1655,7 +1355,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar IndexedDB
     let db;
     const DB_NAME = 'mYpuB_DB';
-    const DB_VERSION = 3; // Incrementado para manejar cambios en el esquema
+    const DB_VERSION = 2; // Incrementado para manejar cambios en el esquema
     const USER_STORE = 'users';
     const FILE_STORE = 'files';
     
@@ -1691,7 +1391,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     fileStore.createIndex('type', 'type', { unique: false });
                     fileStore.createIndex('visibility', 'visibility', { unique: false });
                     fileStore.createIndex('uploadDate', 'uploadDate', { unique: false });
-                    fileStore.createIndex('folderId', 'folderId', { unique: false });
                 }
             };
         });
@@ -1837,19 +1536,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     getRequest.onerror = function() {
                         reject('Error al obtener usuario');
                     };
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-    
-    // Obtener carpetas de un usuario
-    function getUserFolders(userEmail) {
-        return new Promise((resolve, reject) => {
-            getUserByEmail(userEmail)
-                .then(user => {
-                    resolve(user.folders || []);
                 })
                 .catch(error => {
                     reject(error);
