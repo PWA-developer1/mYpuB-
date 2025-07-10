@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
     const fileModal = new bootstrap.Modal(document.getElementById('fileModal'));
     const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-    const folderModal = new bootstrap.Modal(document.getElementById('folderModal'));
     
     // Mostrar mensaje toast
     function showToast(title, message, isError = false) {
@@ -216,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {name: "Togo", prefix: "+228"},
             {name: "Tonga", prefix: "+676"},
             {name: "Trinidad y Tobago", prefix: "+1-868"},
-            {name: "Túnis", prefix: "+216"},
+            {name: "Túnez", prefix: "+216"},
             {name: "Turkmenistán", prefix: "+993"},
             {name: "Turquía", prefix: "+90"},
             {name: "Tuvalu", prefix: "+688"},
@@ -502,19 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmModal.hide();
     });
     
-    // Manejar creación de carpetas
-    const createFolderBtn = document.getElementById('createFolderBtn');
-    createFolderBtn.addEventListener('click', function() {
-        document.getElementById('folderForm').reset();
-        folderModal.show();
-    });
-    
-    const folderForm = document.getElementById('folderForm');
-    folderForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        createFolder();
-    });
-    
     // Actualizar prefijo telefónico según país seleccionado
     function updatePhonePrefix() {
         const countrySelect = document.getElementById('country');
@@ -751,7 +737,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const visibility = document.getElementById('fileVisibility').value;
         const description = document.getElementById('fileDescription').value;
-        const folderId = document.getElementById('fileFolder').value || null;
         
         const progressBar = document.getElementById('uploadProgress').querySelector('.progress-bar');
         document.getElementById('uploadProgress').style.display = 'block';
@@ -775,8 +760,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     uploadDate: new Date().toISOString(),
                     likes: [],
                     downloads: 0,
-                    sharedWith: [],
-                    folderId: folderId
+                    sharedWith: []
                 };
                 
                 saveFile(fileData)
@@ -809,61 +793,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Crear una nueva carpeta
-    function createFolder() {
-        const folderName = document.getElementById('folderName').value;
-        const folderVisibility = document.getElementById('folderVisibility').value;
-        
-        if (!folderName) {
-            showToast('Error', 'Por favor ingresa un nombre para la carpeta', true);
-            return;
-        }
-        
-        const folderData = {
-            name: folderName,
-            visibility: folderVisibility,
-            userEmail: currentUser.email,
-            createdAt: new Date().toISOString()
-        };
-        
-        saveFolder(folderData)
-            .then(() => {
-                folderModal.hide();
-                showToast('Éxito', 'Carpeta creada correctamente');
-                
-                // Recargar la galería si está activa
-                if (document.getElementById('galleryModule').classList.contains('active')) {
-                    loadGalleryFiles();
-                }
-                
-                // Actualizar selector de carpetas en el módulo de subida
-                loadUserFolders();
-            })
-            .catch(error => {
-                console.error('Error al crear carpeta:', error);
-                showToast('Error', 'No se pudo crear la carpeta', true);
-            });
-    }
-    
-    // Cargar carpetas del usuario
-    function loadUserFolders() {
-        const folderSelect = document.getElementById('fileFolder');
-        
-        getUserFolders(currentUser.email)
-            .then(folders => {
-                folderSelect.innerHTML = `
-                    <option value="">Sin carpeta (raíz)</option>
-                    ${folders.map(folder => `
-                        <option value="${folder.id}">${folder.name} (${folder.visibility === 'public' ? 'Pública' : 'Privada'})</option>
-                    `).join('')}
-                `;
-            })
-            .catch(error => {
-                console.error('Error al cargar carpetas:', error);
-                folderSelect.innerHTML = '<option value="">Error al cargar carpetas</option>';
-            });
-    }
-    
     // Cargar archivos para la galería
     function loadGalleryFiles() {
         const searchTerm = document.getElementById('gallerySearch').value.toLowerCase();
@@ -878,8 +807,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        Promise.all([getAllFiles(), getUserFolders(currentUser.email)])
-            .then(([files, folders]) => {
+        getAllFiles()
+            .then(files => {
                 // Filtrar según búsqueda
                 if (searchTerm) {
                     files = files.filter(file => 
@@ -891,13 +820,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Ordenar por fecha más reciente
                 files.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-                folders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
-                if (files.length === 0 && folders.length === 0) {
+                if (files.length === 0) {
                     galleryFiles.innerHTML = `
                         <div class="col-12 text-center py-5">
                             <i class="bi bi-folder-x display-4 text-muted"></i>
-                            <p class="mt-3">No se encontraron archivos ni carpetas</p>
+                            <p class="mt-3">No se encontraron archivos</p>
                         </div>
                     `;
                     return;
@@ -905,48 +833,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 galleryFiles.innerHTML = '';
                 
-                // Mostrar carpetas primero
-                folders.forEach(folder => {
-                    // Solo mostrar carpetas públicas o del usuario actual
-                    if (folder.visibility === 'public' || folder.userEmail === currentUser.email) {
-                        const col = document.createElement('div');
-                        col.className = 'col-md-4 col-sm-6';
-                        
-                        const card = document.createElement('div');
-                        card.className = 'card folder-card h-100';
-                        
-                        const isOwner = folder.userEmail === currentUser.email;
-                        
-                        card.innerHTML = `
-                            <div class="folder-icon">
-                                <i class="bi bi-folder-fill"></i>
-                            </div>
-                            <div class="card-body">
-                                <h6 class="card-title">${folder.name}</h6>
-                                <p class="card-text small text-muted">${folder.visibility === 'public' ? 'Pública' : 'Privada'}</p>
-                                <p class="card-text small text-muted">Creada: ${new Date(folder.createdAt).toLocaleDateString()}</p>
-                                <div class="folder-actions">
-                                    <button class="btn btn-sm btn-outline-primary view-folder-btn" data-folder-id="${folder.id}">
-                                        <i class="bi bi-folder2-open"></i> Abrir
-                                    </button>
-                                    ${isOwner || currentUser.isDeveloper ? `
-                                        <button class="btn btn-sm btn-outline-danger delete-folder-btn ms-2" data-folder-id="${folder.id}">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        `;
-                        
-                        col.appendChild(card);
-                        galleryFiles.appendChild(col);
-                    }
-                });
-                
-                // Mostrar archivos que no están en carpetas
                 files.forEach(file => {
-                    // Solo mostrar archivos públicos o del usuario actual, y que no estén en carpetas
-                    if ((file.visibility === 'public' || file.userEmail === currentUser.email) && !file.folderId) {
+                    // Solo mostrar archivos públicos o del usuario actual
+                    if (file.visibility === 'public' || file.userEmail === currentUser.email) {
                         const col = document.createElement('div');
                         col.className = 'col-md-4 col-sm-6';
                         
@@ -1032,22 +921,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         );
                     });
                 });
-                
-                document.querySelectorAll('.view-folder-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        viewFolder(this.dataset.folderId);
-                    });
-                });
-                
-                document.querySelectorAll('.delete-folder-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        showConfirmModal(
-                            'Eliminar carpeta',
-                            '¿Estás seguro de que deseas eliminar esta carpeta? Todos los archivos dentro se moverán a la raíz.',
-                            () => deleteFolder(this.dataset.folderId)
-                        );
-                    });
-                });
             })
             .catch(error => {
                 console.error('Error al cargar archivos:', error);
@@ -1057,178 +930,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="mt-3">Error al cargar la galería</p>
                     </div>
                 `;
-            });
-    }
-    
-    // Ver archivos en una carpeta
-    function viewFolder(folderId) {
-        const galleryFiles = document.getElementById('galleryFiles');
-        
-        galleryFiles.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-                <p class="mt-2">Cargando carpeta...</p>
-            </div>
-        `;
-        
-        Promise.all([getFolderById(folderId), getAllFiles()])
-            .then(([folder, files]) => {
-                // Filtrar archivos que pertenecen a esta carpeta
-                files = files.filter(file => file.folderId == folderId);
-                
-                if (files.length === 0) {
-                    galleryFiles.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-folder-x display-4 text-muted"></i>
-                            <p class="mt-3">La carpeta está vacía</p>
-                            <button class="btn btn-outline-primary mt-3 back-to-gallery-btn">
-                                <i class="bi bi-arrow-left"></i> Volver a la galería
-                            </button>
-                        </div>
-                    `;
-                    
-                    document.querySelector('.back-to-gallery-btn').addEventListener('click', loadGalleryFiles);
-                    return;
-                }
-                
-                galleryFiles.innerHTML = `
-                    <div class="col-12 mb-3">
-                        <button class="btn btn-outline-primary back-to-gallery-btn">
-                            <i class="bi bi-arrow-left"></i> Volver a la galería
-                        </button>
-                        <h4 class="mt-3">Carpeta: ${folder.name}</h4>
-                        <p class="text-muted">${folder.visibility === 'public' ? 'Pública' : 'Privada'} • Creada: ${new Date(folder.createdAt).toLocaleDateString()}</p>
-                    </div>
-                `;
-                
-                document.querySelector('.back-to-gallery-btn').addEventListener('click', loadGalleryFiles);
-                
-                files.forEach(file => {
-                    const col = document.createElement('div');
-                    col.className = 'col-md-4 col-sm-6';
-                    
-                    const card = document.createElement('div');
-                    card.className = 'card file-card h-100';
-                    
-                    let thumbnailContent = '';
-                    if (file.type === 'image') {
-                        thumbnailContent = `<img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">`;
-                    } else {
-                        thumbnailContent = `
-                            <div class="video-thumbnail">
-                                <img src="data:image/jpeg;base64,${file.data}" class="file-thumbnail card-img-top" alt="${file.name}">
-                                <i class="bi bi-play-circle video-play-icon"></i>
-                            </div>
-                        `;
-                    }
-                    
-                    const isLiked = file.likes.includes(currentUser.email);
-                    const isOwner = file.userEmail === currentUser.email;
-                    
-                    card.innerHTML = `
-                        ${thumbnailContent}
-                        <div class="card-body">
-                            <h6 class="card-title">${file.name}</h6>
-                            <p class="card-text small text-muted">Subido por: ${file.userName}</p>
-                            <p class="card-text small text-muted">${new Date(file.uploadDate).toLocaleString()}</p>
-                            <div class="file-actions">
-                                <div>
-                                    <button class="btn btn-sm ${isLiked ? 'btn-primary' : 'btn-outline-primary'} like-btn" data-file-id="${file.id}">
-                                        <i class="bi bi-hand-thumbs-up"></i> ${file.likes.length}
-                                    </button>
-                                    ${file.visibility === 'public' ? `
-                                        <button class="btn btn-sm btn-outline-success download-btn ms-2" data-file-id="${file.id}">
-                                            <i class="bi bi-download"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                                <button class="btn btn-sm btn-outline-secondary view-btn" data-file-id="${file.id}">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            ${isOwner || currentUser.isDeveloper ? `
-                                <div class="mt-2 text-end">
-                                    <button class="btn btn-sm btn-outline-danger delete-btn" data-file-id="${file.id}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                    
-                    col.appendChild(card);
-                    galleryFiles.appendChild(col);
-                });
-                
-                // Agregar event listeners a los botones
-                document.querySelectorAll('.like-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        toggleLike(this.dataset.fileId);
-                    });
-                });
-                
-                document.querySelectorAll('.download-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        downloadFile(this.dataset.fileId);
-                    });
-                });
-                
-                document.querySelectorAll('.view-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        viewFile(this.dataset.fileId);
-                    });
-                });
-                
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        showConfirmModal(
-                            'Eliminar archivo',
-                            '¿Estás seguro de que deseas eliminar este archivo? Esta acción no se puede deshacer.',
-                            () => deleteFile(this.dataset.fileId)
-                        );
-                    });
-                });
-            })
-            .catch(error => {
-                console.error('Error al cargar carpeta:', error);
-                galleryFiles.innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
-                        <p class="mt-3">Error al cargar la carpeta</p>
-                        <button class="btn btn-outline-primary mt-3 back-to-gallery-btn">
-                            <i class="bi bi-arrow-left"></i> Volver a la galería
-                        </button>
-                    </div>
-                `;
-                
-                document.querySelector('.back-to-gallery-btn').addEventListener('click', loadGalleryFiles);
-            });
-    }
-    
-    // Eliminar carpeta
-    function deleteFolder(folderId) {
-        // Primero mover todos los archivos de esta carpeta a la raíz
-        getAllFiles()
-            .then(files => {
-                const updates = files
-                    .filter(file => file.folderId == folderId)
-                    .map(file => updateFile(file.id, { folderId: null }));
-                
-                return Promise.all(updates);
-            })
-            .then(() => {
-                // Luego eliminar la carpeta
-                return deleteFolderFromDB(folderId);
-            })
-            .then(() => {
-                showToast('Éxito', 'Carpeta eliminada correctamente');
-                loadGalleryFiles();
-            })
-            .catch(error => {
-                console.error('Error al eliminar carpeta:', error);
-                showToast('Error', 'No se pudo eliminar la carpeta', true);
             });
     }
     
@@ -1654,10 +1355,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar IndexedDB
     let db;
     const DB_NAME = 'mYpuB_DB';
-    const DB_VERSION = 3; // Incrementado para manejar cambios en el esquema (añadir carpetas)
+    const DB_VERSION = 2; // Incrementado para manejar cambios en el esquema
     const USER_STORE = 'users';
     const FILE_STORE = 'files';
-    const FOLDER_STORE = 'folders';
     
     function initDB() {
         return new Promise((resolve, reject) => {
@@ -1691,14 +1391,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     fileStore.createIndex('type', 'type', { unique: false });
                     fileStore.createIndex('visibility', 'visibility', { unique: false });
                     fileStore.createIndex('uploadDate', 'uploadDate', { unique: false });
-                    fileStore.createIndex('folderId', 'folderId', { unique: false });
-                }
-                
-                // Crear almacén de carpetas (nuevo en versión 3)
-                if (!db.objectStoreNames.contains(FOLDER_STORE)) {
-                    const folderStore = db.createObjectStore(FOLDER_STORE, { keyPath: 'id', autoIncrement: true });
-                    folderStore.createIndex('userEmail', 'userEmail', { unique: false });
-                    folderStore.createIndex('visibility', 'visibility', { unique: false });
                 }
             };
         });
@@ -2010,112 +1702,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Operaciones CRUD para carpetas
-    function saveFolder(folderData) {
-        return new Promise((resolve, reject) => {
-            initDB()
-                .then(db => {
-                    const transaction = db.transaction([FOLDER_STORE], 'readwrite');
-                    const store = transaction.objectStore(FOLDER_STORE);
-                    
-                    const request = store.add(folderData);
-                    
-                    request.onsuccess = function() {
-                        resolve(request.result);
-                    };
-                    
-                    request.onerror = function() {
-                        reject('Error al guardar carpeta');
-                    };
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-    
-    function getUserFolders(userEmail) {
-        return new Promise((resolve, reject) => {
-            initDB()
-                .then(db => {
-                    const transaction = db.transaction([FOLDER_STORE], 'readonly');
-                    const store = transaction.objectStore(FOLDER_STORE);
-                    const index = store.index('userEmail');
-                    const request = index.getAll(userEmail);
-                    
-                    request.onsuccess = function() {
-                        resolve(request.result);
-                    };
-                    
-                    request.onerror = function() {
-                        reject('Error al obtener carpetas del usuario');
-                    };
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-    
-    function getFolderById(folderId) {
-        return new Promise((resolve, reject) => {
-            initDB()
-                .then(db => {
-                    const transaction = db.transaction([FOLDER_STORE], 'readonly');
-                    const store = transaction.objectStore(FOLDER_STORE);
-                    const request = store.get(parseInt(folderId));
-                    
-                    request.onsuccess = function() {
-                        if (request.result) {
-                            resolve(request.result);
-                        } else {
-                            reject('Carpeta no encontrada');
-                        }
-                    };
-                    
-                    request.onerror = function() {
-                        reject('Error al buscar carpeta');
-                    };
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-    
-    function deleteFolderFromDB(folderId) {
-        return new Promise((resolve, reject) => {
-            initDB()
-                .then(db => {
-                    const transaction = db.transaction([FOLDER_STORE], 'readwrite');
-                    const store = transaction.objectStore(FOLDER_STORE);
-                    const request = store.delete(parseInt(folderId));
-                    
-                    request.onsuccess = function() {
-                        resolve();
-                    };
-                    
-                    request.onerror = function() {
-                        reject('Error al eliminar carpeta');
-                    };
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        });
-    }
-    
     // Inicializar la base de datos al cargar la aplicación
-    initDB().then(() => {
-        // Cargar países al iniciar
-        loadCountries();
-        
-        // Si hay un usuario logueado, cargar sus carpetas
-        if (currentUser) {
-            loadUserFolders();
-        }
-    }).catch(error => {
+    initDB().catch(error => {
         console.error('Error al inicializar la base de datos:', error);
         showToast('Error', 'Hubo un problema al inicializar la aplicación', true);
     });
+
+    // Cargar países al iniciar
+    loadCountries();
 });
