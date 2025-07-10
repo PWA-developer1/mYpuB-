@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
             {name: "Togo", prefix: "+228"},
             {name: "Tonga", prefix: "+676"},
             {name: "Trinidad y Tobago", prefix: "+1-868"},
-            {name: "Túnez", prefix: "+216"},
+            {name: "Túnis", prefix: "+216"},
             {name: "Turkmenistán", prefix: "+993"},
             {name: "Turquía", prefix: "+90"},
             {name: "Tuvalu", prefix: "+688"},
@@ -737,6 +737,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const visibility = document.getElementById('fileVisibility').value;
         const description = document.getElementById('fileDescription').value;
+        const isIntimate = document.getElementById('fileIntimate').checked;
         
         const progressBar = document.getElementById('uploadProgress').querySelector('.progress-bar');
         document.getElementById('uploadProgress').style.display = 'block';
@@ -753,14 +754,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: file.type.startsWith('image') ? 'image' : 'video',
                     size: file.size,
                     data: e.target.result.split(',')[1], // Solo la parte base64
-                    visibility: visibility,
+                    visibility: isIntimate ? 'private' : visibility, // Si es íntimo, forzar privado
                     description: description,
                     userEmail: currentUser.email,
                     userName: currentUser.fullName,
                     uploadDate: new Date().toISOString(),
                     likes: [],
                     downloads: 0,
-                    sharedWith: []
+                    sharedWith: [],
+                    isIntimate: isIntimate // Nuevo campo para marcar archivos íntimos
                 };
                 
                 saveFile(fileData)
@@ -774,6 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             uploadFilesBtn.disabled = true;
                             selectedFiles = [];
                             fileInput.value = '';
+                            document.getElementById('fileIntimate').checked = false; // Resetear checkbox
                             
                             // Recargar la galería si está activa
                             if (document.getElementById('galleryModule').classList.contains('active')) {
@@ -834,13 +837,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 galleryFiles.innerHTML = '';
                 
                 files.forEach(file => {
-                    // Solo mostrar archivos públicos o del usuario actual
-                    if (file.visibility === 'public' || file.userEmail === currentUser.email) {
+                    // Mostrar archivos según su visibilidad e intimidad
+                    const shouldShowFile = (
+                        // Archivos públicos
+                        (file.visibility === 'public' && !file.isIntimate) ||
+                        // Archivos del usuario actual (excepto íntimos compartidos)
+                        (file.userEmail === currentUser.email) ||
+                        // Archivos compartidos con el usuario actual (que no sean íntimos)
+                        (file.sharedWith.includes(currentUser.email) && !file.isIntimate) ||
+                        // Archivos íntimos solo visibles para el propietario o desarrollador
+                        (file.isIntimate && (file.userEmail === currentUser.email || currentUser.isDeveloper))
+                    );
+                    
+                    if (shouldShowFile) {
                         const col = document.createElement('div');
                         col.className = 'col-md-4 col-sm-6';
                         
                         const card = document.createElement('div');
                         card.className = 'card file-card h-100';
+                        
+                        // Añadir badge de íntimo si corresponde
+                        const intimateBadge = file.isIntimate ? 
+                            '<span class="badge bg-danger position-absolute top-0 end-0 m-2">Íntimo</span>' : '';
                         
                         let thumbnailContent = '';
                         if (file.type === 'image') {
@@ -856,9 +874,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         const isLiked = file.likes.includes(currentUser.email);
                         const isOwner = file.userEmail === currentUser.email;
+                        const isDeveloper = currentUser.isDeveloper;
+                        
+                        // Determinar si se puede descargar (públicos o del usuario)
+                        const canDownload = (file.visibility === 'public' || isOwner) && !file.isIntimate;
                         
                         card.innerHTML = `
-                            ${thumbnailContent}
+                            <div class="position-relative">
+                                ${thumbnailContent}
+                                ${intimateBadge}
+                            </div>
                             <div class="card-body">
                                 <h6 class="card-title">${file.name}</h6>
                                 <p class="card-text small text-muted">Subido por: ${file.userName}</p>
@@ -868,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <button class="btn btn-sm ${isLiked ? 'btn-primary' : 'btn-outline-primary'} like-btn" data-file-id="${file.id}">
                                             <i class="bi bi-hand-thumbs-up"></i> ${file.likes.length}
                                         </button>
-                                        ${file.visibility === 'public' ? `
+                                        ${canDownload ? `
                                             <button class="btn btn-sm btn-outline-success download-btn ms-2" data-file-id="${file.id}">
                                                 <i class="bi bi-download"></i>
                                             </button>
@@ -878,7 +903,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 </div>
-                                ${isOwner || currentUser.isDeveloper ? `
+                                ${(isOwner || isDeveloper) ? `
                                     <div class="mt-2 text-end">
                                         <button class="btn btn-sm btn-outline-danger delete-btn" data-file-id="${file.id}">
                                             <i class="bi bi-trash"></i>
@@ -892,6 +917,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         galleryFiles.appendChild(col);
                     }
                 });
+                
+                // Si no hay archivos después del filtrado
+                if (galleryFiles.innerHTML === '') {
+                    galleryFiles.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="bi bi-folder-x display-4 text-muted"></i>
+                            <p class="mt-3">No se encontraron archivos</p>
+                        </div>
+                    `;
+                }
                 
                 // Agregar event listeners a los botones
                 document.querySelectorAll('.like-btn').forEach(btn => {
@@ -945,6 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const fileOwner = document.getElementById('fileOwner');
                 const fileDate = document.getElementById('fileDate');
                 const deleteBtn = document.getElementById('deleteBtn');
+                const intimateBadge = document.getElementById('intimateBadge');
                 
                 modalTitle.textContent = file.name;
                 
@@ -963,6 +999,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 fileOwner.textContent = `Por: ${file.userName}`;
                 fileDate.textContent = new Date(file.uploadDate).toLocaleString();
                 
+                // Mostrar badge de íntimo si corresponde
+                if (file.isIntimate) {
+                    intimateBadge.style.display = 'inline-block';
+                } else {
+                    intimateBadge.style.display = 'none';
+                }
+                
                 // Mostrar botón de eliminar solo para el propietario o desarrollador
                 deleteBtn.style.display = (file.userEmail === currentUser.email || currentUser.isDeveloper) ? 'block' : 'none';
                 
@@ -970,8 +1013,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const isLiked = file.likes.includes(currentUser.email);
                 likeBtn.className = isLiked ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline-primary';
                 
-                // Mostrar botón de descarga solo si es público o el usuario es el propietario
-                downloadBtn.style.display = (file.visibility === 'public' || file.userEmail === currentUser.email) ? 'block' : 'none';
+                // Mostrar botón de descarga solo si es público o el usuario es el propietario y no es íntimo
+                const canDownload = (file.visibility === 'public' || file.userEmail === currentUser.email) && !file.isIntimate;
+                downloadBtn.style.display = canDownload ? 'block' : 'none';
                 
                 fileModal.show();
             })
@@ -985,6 +1029,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function toggleLike(fileId) {
         getFileById(fileId)
             .then(file => {
+                // Verificar si el archivo es íntimo y no es del usuario actual ni desarrollador
+                if (file.isIntimate && file.userEmail !== currentUser.email && !currentUser.isDeveloper) {
+                    throw new Error('No puedes dar like a un archivo íntimo');
+                }
+                
                 const likes = [...file.likes];
                 const userIndex = likes.indexOf(currentUser.email);
                 
@@ -1009,7 +1058,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error al actualizar like:', error);
-                showToast('Error', 'No se pudo actualizar el like', true);
+                showToast('Error', error.message || 'No se pudo actualizar el like', true);
             });
     }
     
@@ -1017,6 +1066,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function downloadFile(fileId) {
         getFileById(fileId)
             .then(file => {
+                // Verificar si el archivo es íntimo
+                if (file.isIntimate && file.userEmail !== currentUser.email && !currentUser.isDeveloper) {
+                    throw new Error('No puedes descargar un archivo íntimo');
+                }
+                
                 // Incrementar contador de descargas
                 return updateFile(fileId, { downloads: file.downloads + 1 });
             })
@@ -1030,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error al descargar archivo:', error);
-                showToast('Error', 'No se pudo descargar el archivo', true);
+                showToast('Error', error.message || 'No se pudo descargar el archivo', true);
             });
     }
     
@@ -1101,6 +1155,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         getUserFiles(currentUser.email)
             .then(files => {
+                // Filtrar archivos que no sean íntimos
+                files = files.filter(file => !file.isIntimate);
+                
                 if (files.length === 0) {
                     shareFileSelect.innerHTML = `
                         <option value="" selected disabled>No tienes archivos para compartir</option>
@@ -1139,6 +1196,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         getFileById(shareFile)
             .then(file => {
+                // Verificar que el archivo no sea íntimo
+                if (file.isIntimate) {
+                    throw new Error('No puedes compartir un archivo marcado como íntimo');
+                }
+                
                 // Verificar que el archivo no esté ya compartido con este usuario
                 if (file.sharedWith.includes(shareUser)) {
                     throw new Error('Este archivo ya ha sido compartido con el usuario seleccionado');
@@ -1179,9 +1241,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         getAllFiles()
             .then(files => {
-                // Filtrar archivos compartidos con el usuario actual
+                // Filtrar archivos compartidos con el usuario actual que no sean íntimos
                 const sharedFiles = files.filter(file => 
-                    file.sharedWith.includes(currentUser.email)
+                    file.sharedWith.includes(currentUser.email) && !file.isIntimate
                 );
                 
                 if (sharedFiles.length === 0) {
